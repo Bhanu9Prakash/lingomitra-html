@@ -1477,10 +1477,10 @@ The basic forms for "a/an" are `ein` (for masculine/neuter) and `eine` (for femi
 
 > **Thinking Point 2: The Endings!**
 > Look closely at the endings being added to the base `ein`:
-> *   **Nominative:** `ein` / `ein**e**` / `ein`
-> *   **Accusative:** `ein**en**` / `ein**e**` / `ein` (Only Masculine changes!)
-> *   **Dativ:** `ein**em**` / `ein**er**` / `ein**em**`
-> Do these endings look familiar? Compare them to the `der/die/das` table from Lesson 11! They are almost identical, especially the crucial `m`/`n`/`r`/`s` sounds. `ein` is like `der` without the `d-`; `eine` like `die` without the `d-`, etc. (with small exceptions like Masc/Neut Nom `ein` vs `der/das`).
+> *   **Nominative:** `ein` / `ein`**e** / `ein`
+> *   **Accusative:** `ein`**en** / `ein`**e** / `ein` (Only Masculine changes!)
+> *   **Dativ:** `ein`**em** / `ein`**er** / `ein`**em**
+> Do these endings look familiar? Compare them to the `der/die/das` table from Lesson 11! They are almost identical, especially the crucial `m`/`n`/`r`/`s` sounds. `ein` is like `der` without the `d-`; eine like `die` without the `d-`, etc. (with small exceptions like Masc/Neut Nom `ein` vs `der/das`).
 
 **Examples:**
 
