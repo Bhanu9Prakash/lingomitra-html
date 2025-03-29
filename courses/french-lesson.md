@@ -1,5 +1,3 @@
-# French Language Course: From English to French
-
 ## Lesson 1: Building Your First French Sentences - Verbs, Pronouns & Pronunciation
 
 Welcome! In this foundational lesson, we'll unlock the basics of forming simple French sentences. We'll learn how to say *who* is doing something and how the *action word* (verb) changes. Plus, we'll get comfortable with some essential French sounds. Forget rote memorization; we're focusing on patterns and connections to English.

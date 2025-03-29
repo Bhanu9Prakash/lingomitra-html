@@ -1,5 +1,3 @@
-# Hindi Language Course: From English to Hindi
-
 ## Lesson 1: Building Your First Hindi Sentences - Verbs, Pronouns & Basic Structure
 
 Welcome! In this foundational lesson, we'll unlock the basics of forming simple Hindi sentences. We'll learn how to say *who* is doing something and how word order works differently from English. Forget rote memorization; we're focusing on patterns and English-Hindi connections to make learning intuitive.

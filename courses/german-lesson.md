@@ -1,6 +1,3 @@
-# German Language Course: From English to German
-
-
 ## Lesson 1: Building Your First German Sentences - Verbs, Pronouns & Pronunciation
 
 Welcome! In this foundational lesson, we'll unlock the basics of forming simple German sentences. We'll learn how to say *who* is doing something and how the *action word* (verb) changes. Plus, we'll get comfortable with some essential German sounds. Forget rote memorization; we're focusing on patterns and connections to English.
