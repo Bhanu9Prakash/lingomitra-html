@@ -26,15 +26,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Language selection
-  const languageSelect = document.getElementById('languageSelect');
+  const customSelect = document.querySelector('.custom-select');
+  const selectedText = document.getElementById('selectedLanguage');
+  const selectItems = document.querySelector('.select-items');
   const lessonContent = document.getElementById('lesson');
   const placeholderContent = document.getElementById('placeholderContent');
   const loadingIndicator = document.getElementById('loading');
   const lessonSelector = document.getElementById('lessonSelector');
   const lessonSelectorContainer = document.getElementById('lessonSelectorContainer');
 
-  languageSelect.addEventListener('change', function() {
-    const selectedLanguage = this.value;
+  // Toggle dropdown
+  selectedText.addEventListener('click', function() {
+    selectItems.classList.toggle('select-hide');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!customSelect.contains(e.target)) {
+      selectItems.classList.add('select-hide');
+    }
+  });
+
+  // Handle language selection
+  document.querySelectorAll('.select-item').forEach(item => {
+    item.addEventListener('click', function() {
+      const selectedLanguage = this.getAttribute('data-value');
+      selectedText.textContent = this.textContent.trim();
+      selectItems.classList.add('select-hide');
 
     if (selectedLanguage) {
       // Show loading indicator

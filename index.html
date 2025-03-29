@@ -29,15 +29,23 @@
   <section class="language-selector">
     <div class="container">
       <h2>Choose Your Language Adventure</h2>
-      <div class="select-wrapper">
-        <select id="languageSelect">
-          <option value="">--Select a language--</option>
-          <option value="german"><img src="flags/de.svg" alt="German Flag" class="language-flag">German</option>
-          <option value="spanish"><img src="flags/es.svg" alt="Spanish Flag" class="language-flag">Spanish</option>
-          <option value="french"><img src="flags/fr.svg" alt="French Flag" class="language-flag">French</option>
-          <option value="hindi"><img src="flags/hi.svg" alt="Hindi Flag" class="language-flag">Hindi</option>
-        </select>
-        <i class="fas fa-chevron-down"></i>
+      <div class="custom-select">
+        <div class="select-selected" id="selectedLanguage">--Select a language--</div>
+        <div class="select-items select-hide">
+          <div class="select-item" data-value="">--Select a language--</div>
+          <div class="select-item" data-value="german">
+            <img src="flags/de.svg" alt="German Flag" class="language-flag">German
+          </div>
+          <div class="select-item" data-value="spanish">
+            <img src="flags/es.svg" alt="Spanish Flag" class="language-flag">Spanish
+          </div>
+          <div class="select-item" data-value="french">
+            <img src="flags/fr.svg" alt="French Flag" class="language-flag">French
+          </div>
+          <div class="select-item" data-value="hindi">
+            <img src="flags/hi.svg" alt="Hindi Flag" class="language-flag">Hindi
+          </div>
+        </div>
       </div>
     </div>
   </section>

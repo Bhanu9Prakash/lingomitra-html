@@ -318,15 +318,52 @@ header .container {
   cursor: pointer;
 }
 
-.select-wrapper select option {
-  display: flex;
-  align-items: center;
-  padding: 10px;
+.custom-select {
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-.select-wrapper select option img {
-  width: 20px;
-  height: 20px;
+.select-selected {
+  background-color: var(--bg-color);
+  padding: 15px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-items {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background-color: var(--bg-color);
+  border: 2px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.select-hide {
+  display: none;
+}
+
+.select-item {
+  padding: 15px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.select-item:hover {
+  background-color: var(--bg-light);
+}
+
+.language-flag {
+  width: 24px;
+  height: 24px;
   margin-right: 10px;
   vertical-align: middle;
 }
