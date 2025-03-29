@@ -318,9 +318,17 @@ header .container {
   cursor: pointer;
 }
 
-.select-wrapper select:focus {
-  border-color: var(--primary-color);
-  outline: none;
+.select-wrapper select option {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.select-wrapper select option img {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  vertical-align: middle;
 }
 
 .select-wrapper i {
