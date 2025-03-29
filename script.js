@@ -54,22 +54,23 @@ document.addEventListener('DOMContentLoaded', function() {
       selectedText.textContent = this.textContent.trim();
       selectItems.classList.add('select-hide');
 
-    if (selectedLanguage) {
-      // Show loading indicator
-      placeholderContent.style.display = 'none';
-      loadingIndicator.style.display = 'flex';
-      lessonSelectorContainer.style.display = 'none';
+      if (selectedLanguage) {
+        // Show loading indicator
+        placeholderContent.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+        lessonSelectorContainer.style.display = 'none';
 
-      // Simulate loading delay
-      setTimeout(function() {
-        fetchLanguageContent(selectedLanguage);
-      }, 1000);
-    } else {
-      lessonContent.innerHTML = '';
-      placeholderContent.style.display = 'block';
-      loadingIndicator.style.display = 'none';
-      lessonSelectorContainer.style.display = 'none';
-    }
+        // Simulate loading delay
+        setTimeout(function() {
+          fetchLanguageContent(selectedLanguage);
+        }, 1000);
+      } else {
+        lessonContent.innerHTML = '';
+        placeholderContent.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+        lessonSelectorContainer.style.display = 'none';
+      }
+    });
   });
 
   // Lesson selection
