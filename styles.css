@@ -103,9 +103,17 @@ header .container {
   gap: 10px;
 }
 
-.logo i {
-  font-size: 28px;
-  color: var(--primary-color);
+.mascot-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.language-flag {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  vertical-align: middle;
 }
 
 .logo h1 {
