@@ -1,15 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>replit</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LingoMitra - Natural Language Learning</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  Hello world
+  <header>
+    <div class="container">
+      <div class="logo">
+        <i class="fas fa-fox"></i>
+        <h1>LingoMitra</h1>
+      </div>
+      <div class="theme-container">
+        <button class="theme-toggle" id="themeToggle">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+
+  <section class="language-selector">
+    <div class="container">
+      <h2>Choose Your Language Adventure</h2>
+      <div class="select-wrapper">
+        <select id="languageSelect">
+          <option value="">--Select a language--</option>
+          <option value="german">German</option>
+          <option value="spanish">Spanish (Coming Soon)</option>
+          <option value="french">French (Coming Soon)</option>
+        </select>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </div>
+  </section>
+
+  <main class="content">
+    <div class="container">
+      <div id="lesson" class="lesson-content">
+        <!-- Lesson content will be loaded here -->
+        <div class="placeholder-content" id="placeholderContent">
+          <div class="placeholder-icon">
+            <i class="fas fa-book-open"></i>
+          </div>
+          <h3>Ready to start learning?</h3>
+          <p>Select a language from the dropdown above to begin your journey.</p>
+        </div>
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Loading lesson content...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span id="currentYear"></span> LingoMitra. Master languages naturally through pattern recognition.</p>
+      </div>
+    </div>
+  </footer>
+
+  <button id="scrollToTop" class="scroll-to-top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
   <script src="script.js"></script>
 </body>
 
