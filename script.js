@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.select-item').forEach(item => {
     item.addEventListener('click', function() {
       const selectedLanguage = this.getAttribute('data-value');
-      selectedText.textContent = this.textContent.trim();
+      selectedText.innerHTML = selectedLanguage ? this.innerHTML : '<span>--Select a language--</span>';
       selectItems.classList.add('select-hide');
 
       if (selectedLanguage) {
