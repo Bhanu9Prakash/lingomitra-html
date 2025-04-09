@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="canonical" href="https://bhanu9prakash.github.io/lingomitra-html/">
-  -
   <meta name="description"
     content="Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, and Hindi to boost your language skills!">
 
@@ -18,113 +17,223 @@
   <meta property="og:url" content="https://bhanu9prakash.github.io/lingomitra-html/">
   <meta property="og:type" content="website">
 
-
+  <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="LingoMitra - Learn Languages the Smart Way">
   <meta name="twitter:description"
     content="Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, and Hindi to boost your language skills!">
   <meta name="twitter:image" content="https://bhanu9prakash.github.io/lingomitra-html/og-image.png">
 
-
-
   <title>LingoMitra - Learn Languages the Smart Way</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="styles.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Vue.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <!-- Marked.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+
+  <!-- Add v-cloak to prevent flash of unstyled content -->
+  <style>
+    [v-cloak] {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <div class="logo">
-        <img src="mascot.svg" alt="LingoMitra Mascot" class="mascot-logo">
-        <h1>LingoMitra</h1>
+  <div id="app" v-cloak>
+    <header>
+      <div class="container">
+        <div class="logo">
+          <img src="mascot.svg" alt="LingoMitra Mascot" class="mascot-logo">
+          <h1>LingoMitra</h1>
+        </div>
+
+        <!-- Header Language Selector (only shown when a language is selected and not on language grid) -->
+        <div class="header-controls">
+          <div class="language-dropdown" v-if="selectedLanguage && currentView !== 'language-grid'">
+            <div class="selected-language" @click="toggleHeaderLanguageDropdown">
+              <img :src="'flags/' + selectedLanguage.flagCode + '.svg'" :alt="selectedLanguage.name + ' Flag'"
+                class="language-flag">
+              <span>{{ selectedLanguage.name }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="language-dropdown-content" :class="{ 'show': showHeaderLanguageDropdown }">
+              <div class="dropdown-item" @click="goToLanguageSelection">
+                <i class="fas fa-th-large"></i> All Languages
+              </div>
+              <div v-for="lang in languages" :key="lang.code" class="dropdown-item" @click="selectLanguage(lang)">
+                <img :src="'flags/' + lang.flagCode + '.svg'" :alt="lang.name + ' Flag'" class="language-flag">
+                {{ lang.name }}
+              </div>
+            </div>
+          </div>
+
+          <div class="theme-container">
+            <button class="theme-toggle" @click="toggleTheme">
+              <i :class="darkTheme ? 'fas fa-sun' : 'fas fa-moon'"></i>
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="theme-container">
-        <button class="theme-toggle" id="themeToggle">
-          <i class="fas fa-moon"></i>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" v-if="currentView === 'hero'" v-show="!loading">
+      <div class="container">
+        <div class="hero-content">
+          <div class="badge">Language Learning Simplified</div>
+          <h2>Learn Languages The Smart Way</h2>
+          <p>Master new languages naturally through pattern-based lessons. Build your vocabulary and understanding step
+            by step with our interactive approach.</p>
+          <div class="cta-buttons">
+            <button class="primary-btn" @click="goToLanguageSelection">Get Started</button>
+            <!-- <button class="secondary-btn">Learn More</button> --> <!-- Learn More functionality not implemented -->
+          </div>
+        </div>
+        <div class="hero-image">
+          <div class="character character-1"><i class="fas fa-language"></i></div>
+          <div class="character character-2"><i class="fas fa-comment-dots"></i></div>
+          <div class="character character-3"><i class="fas fa-globe-americas"></i></div>
+          <div class="character character-4"><i class="fas fa-book"></i></div>
+          <div class="character character-5"><i class="fas fa-graduation-cap"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Language Grid Selection Page -->
+    <section class="language-grid-section" v-if="currentView === 'language-grid'" v-show="!loading">
+      <div class="container">
+        <h2>Choose Your Language Adventure</h2>
+        <p class="section-intro">Select a language to start your learning journey. Each language offers unique lessons
+          designed to help you master new skills naturally.</p>
+
+        <div class="language-grid">
+          <div v-for="lang in languages" :key="lang.code" class="language-card" @click="selectLanguage(lang)">
+            <div class="language-card-flag">
+              <img :src="'flags/' + lang.flagCode + '.svg'" :alt="lang.name + ' Flag'">
+            </div>
+            <h3>{{ lang.name }}</h3>
+            <p class="speakers">{{ lang.speakers }} million speakers</p>
+            <button class="language-btn">Start Learning</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Floating Lesson Header (shows when viewing lesson content) -->
+    <section class="floating-lesson-header" v-if="lessonContent && !loading && currentView === 'lesson-selector'">
+      <div class="container">
+        <div class="lesson-header-content">
+          <div class="lesson-selector-toggle" @click="openLessonModal">
+            <i class="fas fa-bars"></i> <!-- Changed icon to bars for clarity -->
+          </div>
+          <h2 v-if="currentLesson" class="centered-lesson-title">
+            <!-- Conditionally display "Lesson XX: " -->
+            <span v-if="getLessonNumber(currentLesson.id)">
+              Lesson {{ getLessonNumber(currentLesson.id) }}:
+            </span>
+            <!-- Always display the formatted title (without the prefix) -->
+            {{ formatLessonTitle(currentLesson.title) }}
+          </h2>
+        </div>
+    </section>
+
+    <main class="content"
+      v-show="currentView === 'lesson-selector' || (errorMessage && currentView !== 'hero') || comingSoon">
+      <div class="container">
+        <div class="lesson-content-wrapper"> <!-- Added wrapper for styling context -->
+
+          <!-- Initial Placeholder (when no language selected yet but not on hero/grid) -->
+          <div class="placeholder-content"
+            v-if="!selectedLanguage && !loading && currentView !== 'hero' && currentView !== 'language-grid'">
+            <div class="placeholder-icon">
+              <i :class="placeholderIcon"></i>
+            </div>
+            <h3>{{ placeholderTitle }}</h3>
+            <p>{{ placeholderText }}</p>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div class="loading" v-if="loading">
+            <div class="spinner"></div>
+            <p>Loading lesson content...</p>
+          </div>
+
+          <!-- Lesson Content Area -->
+          <div class="lesson-content" v-if="lessonContent && !loading && !errorMessage && !comingSoon"
+            v-html="lessonContent"></div>
+
+          <!-- Error Message Display -->
+          <div v-if="errorMessage && !loading" class="error-message">
+            <i class="fas fa-exclamation-triangle"
+              style="font-size: 40px; color: var(--danger-color); margin-bottom: 15px;"></i> <!-- Changed icon -->
+            <h3>{{ errorTitle }}</h3>
+            <p>{{ errorMessage }}</p>
+            <p v-if="errorDetails" class="error-details">Details: {{ errorDetails }}</p>
+            <button class="primary-btn" @click="goToLanguageSelection" style="margin-top: 20px;">Choose
+              Language</button>
+          </div>
+
+          <!-- Coming Soon Message -->
+          <div v-if="comingSoon && !loading && !errorMessage" class="coming-soon">
+            <div class="placeholder-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h3>{{ selectedLanguage.name }} Lessons Coming Soon!</h3>
+            <p>We're working hard to create a comprehensive {{ selectedLanguage.name.toLowerCase() }} learning
+              experience. Check back soon!</p>
+            <!-- <button class="primary-btn" style="margin-top: 20px;">Get Notified</button> -->
+            <!-- Notify functionality not implemented -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Lesson Selection Modal -->
+    <div class="modal-overlay" v-if="showLessonModal" @click="closeLessonModal"></div>
+    <div class="lesson-selection-modal" v-if="showLessonModal">
+      <div class="modal-header">
+        <h3>Select a Lesson</h3>
+        <button class="modal-close" @click="closeLessonModal" aria-label="Close lesson selection">
+          <i class="fas fa-times"></i>
         </button>
       </div>
-    </div>
-  </header>
-
-  <section class="language-selector">
-    <div class="container">
-      <h2>Choose Your Language Adventure</h2>
-      <div class="custom-select">
-        <div class="select-selected" id="selectedLanguage"><span>--Select a language--</span></div>
-        <div class="select-items select-hide">
-          <div class="select-item" data-value="">--Select a language--</div>
-          <div class="select-item" data-value="german">
-            <img src="flags/de.svg" alt="German Flag" class="language-flag">German
-          </div>
-          <div class="select-item" data-value="spanish">
-            <img src="flags/es.svg" alt="Spanish Flag" class="language-flag">Spanish
-          </div>
-          <div class="select-item" data-value="french">
-            <img src="flags/fr.svg" alt="French Flag" class="language-flag">French
-          </div>
-          <div class="select-item" data-value="hindi">
-            <img src="flags/hi.svg" alt="Hindi Flag" class="language-flag">Hindi
-          </div>
-          <div class="select-item" data-value="chinese">
-            <img src="flags/zh.svg" alt="Chinese Flag" class="language-flag">Chinese
-          </div>
-          <div class="select-item" data-value="japanese">
-            <img src="flags/jp.svg" alt="Japanese Flag" class="language-flag">Japanese
+      <div class="modal-body">
+        <div class="lesson-list">
+          <div class="lesson-item" v-for="lesson in lessons" :key="lesson.id"
+            :class="{ 'active': lesson.id === selectedLessonId }" @click="selectLessonFromModal(lesson.id)">
+            <span class="lesson-number" v-if="lesson.id.includes('-lesson-')">
+              Lesson {{ lesson.id.split('-lesson-')[1] }}:
+            </span>
+            <span v-else class="lesson-intro">Introduction:</span>
+            <span class="lesson-title">{{ formatLessonTitle(lesson.title) }}</span> <!-- Use formatter here -->
           </div>
         </div>
       </div>
     </div>
-  </section>
 
-  <section class="lesson-selector" id="lessonSelectorContainer" style="display: none;">
-    <div class="container">
-      <h2>Select a Lesson</h2>
-      <div class="select-wrapper">
-        <select id="lessonSelector">
-          <option value="">--Select a lesson--</option>
-        </select>
-        <i class="fas fa-chevron-down"></i>
-      </div>
-    </div>
-  </section>
-
-  <main class="content">
-    <div class="container">
-      <div id="lesson" class="lesson-content">
-        <!-- Lesson content will be loaded here -->
-        <div class="placeholder-content" id="placeholderContent">
-          <div class="placeholder-icon">
-            <i class="fas fa-book-open"></i>
-          </div>
-          <h3>Ready to start learning?</h3>
-          <p>Select a language from the dropdown above to begin your journey.</p>
-        </div>
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>Loading lesson content...</p>
+    <footer>
+      <div class="container">
+        <div class="footer-bottom">
+          <p>© {{ currentYear }} LingoMitra. Master languages naturally through pattern recognition.</p>
         </div>
       </div>
-    </div>
-  </main>
+    </footer>
 
-  <footer>
-    <div class="container">
-      <div class="footer-bottom">
-        <p>&copy; <span id="currentYear"></span> LingoMitra. Master languages naturally through pattern recognition.</p>
-      </div>
-    </div>
-  </footer>
+    <button id="scrollToTop" class="scroll-to-top" :class="{ 'visible': showScrollTop }" @click="scrollToTop"
+      aria-label="Scroll to top">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+  </div>
 
-  <button id="scrollToTop" class="scroll-to-top">
-    <i class="fas fa-arrow-up"></i>
-  </button>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
-  <script src="script.js"></script>
+  <!-- Structured Data -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -135,7 +244,8 @@
       "description": "Master languages with interactive, pattern-based lessons."
     }
   </script>
-
+  <!-- Vue App Script -->
+  <script src="script.js"></script>
 </body>
 
 </html>

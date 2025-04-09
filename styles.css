@@ -1,3 +1,4 @@
+/* Root Variables */
 :root {
   --primary-color: #ff6600;
   --primary-light: #ff8533;
@@ -23,12 +24,6 @@
 
 /* Dark Theme Variables */
 .dark-theme {
-  --primary-color: #ff6600;
-  --primary-light: #ff8533;
-  --primary-dark: #cc5200;
-  --secondary-color: #4c7ef9;
-  --secondary-light: #7a9dfb;
-  --secondary-dark: #2b5bf7;
   --text-color: #f0f0f0;
   --text-light: #cccccc;
   --bg-color: #1a1a1a;
@@ -36,6 +31,7 @@
   --bg-dark: #333333;
   --border-color: #444444;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  /* Keep primary/secondary colors same or adjust if needed */
 }
 
 /* General Reset */
@@ -45,12 +41,18 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  /* Smooth scroll for anchor links and JS scrolls */
+}
+
 body {
   font-family: var(--font-family);
   color: var(--text-color);
   background-color: var(--bg-color);
   line-height: 1.6;
-  transition: var(--transition);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Only transition colors */
 }
 
 .container {
@@ -75,6 +77,8 @@ button {
   font-family: var(--font-family);
   border: none;
   transition: var(--transition);
+  background: none;
+  /* Ensure buttons don't have default bg */
 }
 
 ul {
@@ -89,6 +93,8 @@ header {
   top: 0;
   z-index: 100;
   padding: 15px 0;
+  transition: background-color 0.3s ease;
+  /* Added transition */
 }
 
 header .container {
@@ -110,20 +116,32 @@ header .container {
 }
 
 .language-flag {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  /* Slightly smaller */
+  height: 20px;
   margin-right: 8px;
   vertical-align: middle;
+  border-radius: 3px;
+  /* Soften edges */
 }
 
 .logo h1 {
-  font-size: 28px;
+  font-size: 26px;
+  /* Slightly smaller */
   font-weight: 800;
   color: var(--primary-color);
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  /* Added gap */
+}
+
 .theme-container {
   display: flex;
+  /* No change */
   align-items: center;
 }
 
@@ -136,6 +154,9 @@ header .container {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  /* Fixed size */
+  height: 40px;
   transition: var(--transition);
 }
 
@@ -144,12 +165,107 @@ header .container {
   transform: rotate(15deg);
 }
 
+/* Header Language Selector Styles */
+.language-dropdown {
+  position: relative;
+  /* margin-right: 20px; Removed, using gap in header-controls now */
+}
+
+.selected-language {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-light);
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+  /* Added subtle border */
+}
+
+.selected-language:hover {
+  background-color: var(--bg-dark);
+  border-color: var(--text-light);
+}
+
+.selected-language .language-flag {
+  margin-right: 8px;
+}
+
+.selected-language span {
+  font-weight: 600;
+}
+
+.selected-language i {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+  transition: transform 0.2s ease;
+}
+
+.language-dropdown .selected-language.open i {
+  /* Rotate arrow when open */
+  transform: rotate(180deg);
+}
+
+.language-dropdown-content {
+  position: absolute;
+  top: calc(100% + 5px);
+  /* Add slight gap */
+  right: 0;
+  min-width: 200px;
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 10px 0;
+  z-index: 101;
+  /* Above header */
+  display: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.language-dropdown-content.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: var(--text-color);
+  /* Ensure text color */
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-light);
+}
+
+.dropdown-item .language-flag {
+  margin-right: 10px;
+}
+
+.dropdown-item i {
+  margin-right: 10px;
+  color: var(--primary-color);
+  width: 16px;
+  /* Align icons */
+  text-align: center;
+}
+
 /* Hero Section */
 .hero {
   padding: 60px 0;
   background-color: var(--bg-light);
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid var(--border-color);
+  /* Separator */
 }
 
 .hero .container {
@@ -167,17 +283,24 @@ header .container {
   display: inline-block;
   background-color: rgba(255, 102, 0, 0.1);
   color: var(--primary-color);
-  padding: 8px 16px;
+  padding: 6px 14px;
+  /* Slightly smaller */
   border-radius: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  /* Bolder */
   margin-bottom: 20px;
+  font-size: 14px;
+  /* Smaller */
 }
 
 .hero h2 {
-  font-size: 36px;
+  font-size: 40px;
+  /* Larger */
   font-weight: 800;
   margin-bottom: 20px;
   line-height: 1.2;
+  color: var(--text-color);
+  /* Ensure color */
 }
 
 .hero p {
@@ -196,15 +319,20 @@ header .container {
 .primary-btn {
   background-color: var(--primary-color);
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  /* Bolder */
   padding: 12px 24px;
   border-radius: var(--border-radius);
   font-size: 16px;
+  text-transform: uppercase;
+  /* Style */
+  letter-spacing: 0.5px;
 }
 
 .primary-btn:hover {
   background-color: var(--primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .secondary-btn {
@@ -219,6 +347,7 @@ header .container {
 
 .secondary-btn:hover {
   background-color: var(--bg-dark);
+  border-color: var(--text-light);
   transform: translateY(-2px);
 }
 
@@ -226,11 +355,14 @@ header .container {
   flex: 1;
   position: relative;
   height: 400px;
+  min-width: 300px;
+  /* Ensure it has some width */
 }
 
 .character {
   position: absolute;
-  background-color: white;
+  background-color: var(--bg-color);
+  /* Use variable */
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -238,7 +370,10 @@ header .container {
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow);
-  animation: float 5s infinite ease-in-out;
+  animation: float 6s infinite ease-in-out;
+  /* Slower animation */
+  border: 2px solid var(--bg-light);
+  /* Subtle border */
 }
 
 .character i {
@@ -246,35 +381,38 @@ header .container {
   color: var(--primary-color);
 }
 
+/* Character positions (adjust as needed) */
 .character-1 {
-  top: 30%;
-  left: 20%;
+  top: 25%;
+  left: 15%;
   animation-delay: 0s;
 }
 
 .character-2 {
-  top: 10%;
+  top: 5%;
   left: 50%;
+  transform: translateX(-50%);
   animation-delay: 1s;
 }
 
 .character-3 {
-  bottom: 30%;
-  left: 10%;
-  animation-delay: 2s;
+  bottom: 25%;
+  left: 5%;
+  animation-delay: 2.5s;
 }
 
 .character-4 {
-  top: 50%;
-  right: 20%;
-  animation-delay: 1.5s;
+  top: 45%;
+  right: 15%;
+  animation-delay: 1.8s;
 }
 
 .character-5 {
-  bottom: 20%;
-  right: 30%;
+  bottom: 15%;
+  right: 35%;
   animation-delay: 0.5s;
 }
+
 
 @keyframes float {
 
@@ -284,217 +422,436 @@ header .container {
   }
 
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-15px);
   }
 }
 
-/* Language Selector */
-.language-selector {
-  padding: 40px 0;
-  background-color: var(--bg-color);
+/* Language Grid Section Styles */
+.language-grid-section {
+  padding: 60px 0;
+  background-color: var(--bg-light);
+  /* Consistent background */
 }
 
-.language-selector h2 {
+.language-grid-section h2 {
   text-align: center;
-  margin-bottom: 30px;
-  font-weight: 700;
-}
-
-.select-wrapper {
-  position: relative;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.select-wrapper select {
-  width: 100%;
-  padding: 15px;
-  border-radius: var(--border-radius);
-  border: 2px solid var(--border-color);
-  font-size: 16px;
-  appearance: none;
-  background-color: var(--bg-color);
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 15px;
   color: var(--text-color);
-  cursor: pointer;
 }
 
-.custom-select {
-  position: relative;
-  max-width: 500px;
-  margin: 0 auto;
+.section-intro {
+  max-width: 700px;
+  /* Slightly wider */
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 17px;
+  /* Slightly larger */
 }
 
-.select-selected {
+.language-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* Adjust minmax */
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.language-card {
   background-color: var(--bg-color);
-  padding: 15px;
-  border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Faster transition */
   cursor: pointer;
-  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border-color);
 }
 
-.select-items {
-  position: absolute;
-  top: 100%;
+.language-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-light);
+}
+
+.language-card-flag {
+  width: 80px;
+  /* Smaller flag container */
+  height: 80px;
+  margin: 0 auto 20px;
+  background-color: var(--bg-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid var(--bg-color);
+  /* Inner border */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow */
+}
+
+.language-card-flag img {
+  width: 45px;
+  /* Adjust flag size */
+  height: 45px;
+  object-fit: contain;
+}
+
+.language-card h3 {
+  margin-bottom: 8px;
+  /* Less space */
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.speakers {
+  color: var(--text-light);
+  margin-bottom: 25px;
+  /* More space before button */
+  font-size: 14px;
+}
+
+.language-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  /* Smaller button */
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: var(--transition);
+  width: auto;
+  /* Don't force full width */
+  margin-top: auto;
+  /* Pushes button to bottom if card heights vary */
+}
+
+.language-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Floating Lesson Header Styles */
+.floating-lesson-header {
+  background-color: var(--bg-color);
+  box-shadow: var(--shadow);
+  padding: 10px 0;
+  /* Reduced padding */
+  position: sticky;
+  /* top: 0; Needs to be below main header */
+  top: 71px;
+  /* Adjust based on actual header height */
+  z-index: 90;
+  /* margin-bottom: 30px; Removed, padding added to main content */
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.3s ease;
+  /* Added transition */
+}
+
+.lesson-header-content {
+  display: flex;
+  /* justify-content: flex-start; Original */
+  align-items: center;
+  position: relative;
+  /* For centering title */
+}
+
+.floating-lesson-header h2.centered-lesson-title {
+  font-size: 20px;
+  /* Slightly smaller */
+  margin: 0;
+  color: var(--text-color);
+  font-weight: 700;
+  text-align: center;
+  /* Center the title */
+  flex-grow: 1;
+  /* Allow title to take space */
+  padding: 0 50px;
+  /* Add padding to prevent overlap with icon/future elements */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lesson-selector-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+  /* Position absolute removed, use flex order or margins if needed */
+  /* position: absolute; */
+  /* left: 0; */
+}
+
+.lesson-selector-toggle:hover {
+  background-color: var(--bg-dark);
+  border-color: var(--text-light);
+}
+
+/* Style for the icon inside the toggle */
+.lesson-selector-toggle i {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  z-index: 99;
-  background-color: var(--bg-color);
-  border: 2px solid var(--border-color);
-  border-top: none;
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  /* Darker overlay */
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  /* Stronger blur */
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.select-hide {
-  display: none;
+.modal-overlay.show {
+  /* Added class for transition */
+  opacity: 1;
 }
 
-.select-item {
-  padding: 15px;
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-}
-
-.select-item:hover {
-  background-color: var(--bg-light);
-}
-
-.language-flag {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-  vertical-align: middle;
-}
-
-.select-wrapper i {
-  position: absolute;
-  right: 15px;
+.lesson-selection-modal {
+  position: fixed;
   top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-light);
-  pointer-events: none;
-}
-
-/* Lesson Selector Styles */
-.lesson-selector {
-  padding: 40px 0;
-  background-color: var(--bg-light);
-  border-top: 1px solid var(--border-color);
-}
-
-.lesson-selector h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  font-weight: 700;
-  font-size: 22px;
-  color: var(--text-color);
-}
-
-.lesson-selector .select-wrapper {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.lesson-selector .select-wrapper select {
-  width: 100%;
-  padding: 15px;
-  border-radius: var(--border-radius);
-  border: 2px solid var(--border-color);
-  font-size: 16px;
-  appearance: none;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  /* Initial state for transition */
   background-color: var(--bg-color);
-  color: var(--text-color);
-  cursor: pointer;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  /* Stronger shadow */
+  width: 90%;
+  max-width: 550px;
+  /* Slightly narrower */
+  max-height: 85vh;
+  z-index: 1001;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.lesson-selector .select-wrapper select:focus {
-  border-color: var(--primary-color);
-  outline: none;
+.lesson-selection-modal.show {
+  /* Added class for transition */
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
-/* Lesson Progress */
-.lesson-progress {
-  margin-top: 20px;
+
+.modal-header {
   display: flex;
   justify-content: space-between;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  /* Prevent header from shrinking */
 }
 
-.lesson-progress button {
-  background-color: var(--secondary-color);
-  color: white;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: var(--border-radius);
-  font-size: 14px;
+.modal-header h3 {
+  font-size: 18px;
+  /* Smaller */
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.modal-close {
+  background-color: transparent;
+  color: var(--text-light);
+  font-size: 20px;
+  /* Larger icon */
+  padding: 5px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: var(--transition);
+  width: 30px;
+  height: 30px;
 }
 
-.lesson-progress button:hover {
-  background-color: var(--secondary-dark);
-  transform: translateY(-2px);
+.modal-close:hover {
+  background-color: var(--bg-light);
+  color: var(--danger-color);
 }
 
-.lesson-progress button:disabled {
-  background-color: var(--bg-dark);
+.modal-body {
+  flex-grow: 1;
+  /* Allow body to take available space */
+  overflow-y: auto;
+  padding: 0;
+  /* Remove padding, handled by lesson-item */
+}
+
+.lesson-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-left-color 0.2s ease;
+  display: flex;
+  align-items: baseline;
+  /* Align text baselines */
+  border-left: 4px solid transparent;
+  /* Placeholder for active state */
+  margin-left: -4px;
+  /* Compensate for border */
+}
+
+.lesson-item:last-child {
+  border-bottom: none;
+}
+
+.lesson-item:hover {
+  background-color: var(--bg-light);
+}
+
+.lesson-item.active {
+  background-color: rgba(255, 102, 0, 0.05);
+  /* More subtle highlight */
+  border-left-color: var(--primary-color);
+  font-weight: 600;
+  /* Highlight active text */
+}
+
+.lesson-number,
+.lesson-intro {
   color: var(--text-light);
-  cursor: not-allowed;
-  transform: none;
+  /* Subdued color */
+  font-weight: 600;
+  margin-right: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  /* Slightly smaller */
+}
+
+.lesson-item.active .lesson-number,
+.lesson-item.active .lesson-intro {
+  color: var(--primary-color);
+  /* Highlight prefix when active */
+}
+
+
+.lesson-intro {
+  color: var(--secondary-color);
+  /* Differentiate intro */
+}
+
+.lesson-item.active .lesson-intro {
+  color: var(--secondary-dark);
+}
+
+.lesson-title {
+  flex: 1;
+  color: var(--text-color);
+  /* Ensure text color */
+}
+
+/* Prevent body scrolling when modal is open */
+body.modal-open {
+  overflow: hidden;
 }
 
 /* Content Styles */
 .content {
   padding: 40px 0 80px;
+  /* Add padding top/bottom */
   background-color: var(--bg-light);
+  /* Match language grid bg */
   min-height: 500px;
+  /* Ensure minimum height */
 }
 
-.lesson-content {
+.content .container {
+  position: relative;
+}
+
+/* Wrapper for content sections (placeholder, loading, error, lesson) */
+.lesson-content-wrapper {
   background-color: var(--bg-color);
   border-radius: var(--border-radius);
-  padding: 30px;
+  padding: 30px 40px;
+  /* More horizontal padding */
   box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
 }
 
-.placeholder-content {
+.placeholder-content,
+.loading,
+.error-message,
+.coming-soon {
   text-align: center;
-  padding: 50px 0;
+  padding: 60px 20px;
+  /* More padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .placeholder-icon {
-  font-size: 60px;
+  font-size: 50px;
+  /* Slightly smaller */
   color: var(--text-light);
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
-.placeholder-content h3 {
-  font-size: 24px;
-  margin-bottom: 10px;
+.placeholder-content h3,
+.error-message h3,
+.coming-soon h3 {
+  font-size: 22px;
+  margin-bottom: 15px;
+  font-weight: 700;
 }
 
-.placeholder-content p {
+.placeholder-content p,
+.error-message p,
+.coming-soon p {
   color: var(--text-light);
-  max-width: 400px;
-  margin: 0 auto;
+  max-width: 500px;
+  margin: 0 auto 15px auto;
+  /* Add bottom margin to p */
+  line-height: 1.7;
 }
 
-.loading {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  padding: 50px 0;
+.loading p {
+  color: var(--text-light);
+  font-weight: 600;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  border: 4px solid var(--bg-dark);
+  /* Use bg-dark for track */
   border-left-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -508,8 +865,15 @@ header .container {
 }
 
 /* Markdown Content Styling */
+/* Remove specific padding from wrapper, apply to lesson-content itself */
+.lesson-content {
+  padding: 0;
+  /* Reset padding here */
+}
+
 .lesson-content h2 {
-  font-size: 28px;
+  font-size: 26px;
+  /* Slightly smaller */
   font-weight: 700;
   margin-top: 40px;
   margin-bottom: 20px;
@@ -518,63 +882,98 @@ header .container {
   color: var(--text-color);
 }
 
-.lesson-content h2:first-of-type {
+.lesson-content h2:first-child {
   margin-top: 0;
   /* Remove top margin for first heading */
 }
 
 .lesson-content h3 {
-  font-size: 22px;
-  font-weight: 600;
-  margin-top: 30px;
+  font-size: 21px;
+  /* Slightly smaller */
+  font-weight: 700;
+  /* Bolder */
+  margin-top: 35px;
   margin-bottom: 15px;
   color: var(--text-color);
 }
 
+.lesson-content h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 30px;
+  margin-bottom: 12px;
+  color: var(--text-light);
+  /* Subdue h4 */
+}
+
+
 .lesson-content p {
   margin-bottom: 20px;
   line-height: 1.7;
+  color: var(--text-color);
+  /* Ensure base text color */
 }
 
 .lesson-content em {
-  color: var(--primary-color);
+  /* color: var(--primary-color); Keep default emphasis or customize */
   font-style: italic;
 }
 
 .lesson-content strong {
   font-weight: 700;
-  color: var(--primary-color);
+  /* color: var(--primary-color); Keep default strong or customize */
 }
 
 .lesson-content ul,
 .lesson-content ol {
   margin-bottom: 20px;
   padding-left: 30px;
+  /* Standard indent */
 }
 
 .lesson-content ul li,
 .lesson-content ol li {
   margin-bottom: 10px;
+  line-height: 1.7;
+}
+
+.lesson-content ul {
+  list-style: disc;
+  /* Default */
+}
+
+.lesson-content ol {
+  list-style: decimal;
+  /* Default */
 }
 
 .lesson-content blockquote {
   border-left: 4px solid var(--primary-color);
-  padding: 15px;
-  margin: 20px 0;
+  padding: 15px 20px;
+  margin: 25px 0;
   background-color: var(--bg-light);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  color: var(--text-light);
+  /* Quote text slightly lighter */
 }
 
 .lesson-content blockquote p {
   margin-bottom: 0;
+  font-style: italic;
+  /* Italicize quote */
 }
 
 .lesson-content code {
   background-color: var(--bg-dark);
   padding: 3px 6px;
-  border-radius: 3px;
-  font-family: monospace;
-  color: var(--primary-color);
+  border-radius: 4px;
+  /* Slightly rounder */
+  font-family: 'Courier New', Courier, monospace;
+  /* Monospace font */
+  color: var(--primary-dark);
+  /* Different color for inline code */
+  font-size: 0.9em;
+  /* Slightly smaller */
 }
 
 .lesson-content pre {
@@ -582,20 +981,31 @@ header .container {
   padding: 15px;
   border-radius: var(--border-radius);
   overflow-x: auto;
-  margin-bottom: 20px;
+  margin: 25px 0;
+  /* Consistent margin */
+  border: 1px solid var(--border-color);
 }
 
 .lesson-content pre code {
   background-color: transparent;
   padding: 0;
-  color: inherit;
+  color: var(--text-color);
+  /* Use main text color in pre blocks */
+  font-size: 0.9em;
+  font-family: 'Courier New', Courier, monospace;
+  border: none;
+  /* Remove border for code inside pre */
+  border-radius: 0;
 }
 
 .table-container {
   overflow-x: auto;
-  margin-bottom: 30px;
+  margin: 25px 0;
+  /* Consistent margin */
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  /* Ensure bg for table */
 }
 
 .lesson-content table {
@@ -604,18 +1014,25 @@ header .container {
 }
 
 .lesson-content th {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-light);
+  /* Lighter header */
   padding: 12px 15px;
   text-align: left;
   border-bottom: 2px solid var(--border-color);
-  font-weight: 600;
+  font-weight: 700;
+  /* Bolder header */
+  color: var(--text-color);
 }
 
 .lesson-content td {
   padding: 12px 15px;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+  /* Align content top */
 }
 
+/* Use bg-light for striping to contrast better with bg-color */
+.dark-theme .lesson-content tr:nth-child(even),
 .lesson-content tr:nth-child(even) {
   background-color: var(--bg-light);
 }
@@ -624,71 +1041,109 @@ header .container {
   border-bottom: none;
 }
 
+/* Custom Blocks */
 .thinking-point {
-  background-color: rgba(76, 126, 249, 0.1);
+  background-color: rgba(76, 126, 249, 0.05);
+  /* More subtle background */
   border-left: 4px solid var(--secondary-color);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  padding: 15px;
+  padding: 20px;
   margin: 25px 0;
+  /* Consistent margin */
+  border: 1px solid rgba(76, 126, 249, 0.2);
+  /* Add subtle border */
+  border-left-width: 4px;
+  /* Ensure left border is thick */
 }
 
 .thinking-header {
   font-weight: 700;
-  color: var(--secondary-color);
-  margin-bottom: 10px;
+  color: var(--secondary-dark);
+  /* Darker blue */
+  margin-bottom: 15px;
   display: flex;
   align-items: center;
+  font-size: 1.1em;
 }
 
 .thinking-header::before {
   content: '💡';
+  /* Keep icon */
   margin-right: 10px;
+  font-size: 1.2em;
 }
 
+.thinking-point p:last-child {
+  margin-bottom: 0;
+  /* Remove bottom margin on last paragraph */
+}
+
+
 .practice-answers {
-  background-color: rgba(40, 167, 69, 0.1);
+  background-color: rgba(40, 167, 69, 0.05);
+  /* More subtle background */
   border-radius: var(--border-radius);
   padding: 20px;
   margin: 25px 0;
+  /* Consistent margin */
   border: 1px solid rgba(40, 167, 69, 0.2);
+  /* Subtle border */
 }
 
 .practice-answers h4 {
   font-size: 18px;
   font-weight: 700;
+  margin-top: 0;
+  /* Remove top margin if it's the first element */
   margin-bottom: 15px;
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+}
+
+.practice-answers h4::before {
+  content: '\f058';
+  /* Font Awesome check circle */
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  margin-right: 10px;
   color: var(--success-color);
 }
 
-/* Enhanced language-specific styling */
+.practice-answers p:last-child,
+.practice-answers ul:last-child,
+.practice-answers ol:last-child {
+  margin-bottom: 0;
+  /* Remove bottom margin on last element */
+}
+
+
+/* Language specific / misc */
 .lesson-content .language-highlight {
   background-color: rgba(255, 102, 0, 0.1);
   border-radius: 4px;
   padding: 2px 5px;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-dark);
+  /* Use darker primary */
+  font-family: 'Courier New', Courier, monospace;
+  /* Maybe monospace? */
 }
 
-.lesson-section {
-  margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.lesson-section:last-child {
-  border-bottom: none;
-}
-
-.coming-soon {
-  text-align: center;
-  padding: 50px 0;
+hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 30px 0;
 }
 
 /* Footer */
 footer {
   background-color: var(--bg-dark);
-  padding: 20px 0;
-  margin-top: 40px;
+  padding: 25px 0;
+  /* More padding */
+  margin-top: 60px;
+  /* More space before footer */
+  border-top: 1px solid var(--border-color);
 }
 
 .footer-bottom {
@@ -697,6 +1152,7 @@ footer {
 
 .footer-bottom p {
   color: var(--text-light);
+  font-size: 14px;
 }
 
 /* Scroll to Top Button */
@@ -704,8 +1160,9 @@ footer {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  /* Smaller */
+  height: 45px;
   border-radius: 50%;
   background-color: var(--primary-color);
   color: white;
@@ -716,8 +1173,9 @@ footer {
   box-shadow: var(--shadow);
   opacity: 0;
   visibility: hidden;
-  transition: var(--transition);
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
   z-index: 99;
+  border: none;
 }
 
 .scroll-to-top.visible {
@@ -727,39 +1185,68 @@ footer {
 
 .scroll-to-top:hover {
   background-color: var(--primary-dark);
-  transform: translateY(-5px);
+  transform: translateY(-3px);
+  /* Lift slightly more */
 }
 
 /* Error message styling */
 .error-message {
-  text-align: center;
-  padding: 30px;
-  background-color: rgba(220, 53, 69, 0.1);
+  /* text-align: center; */
+  /* Already centered via flex */
+  /* padding: 30px; */
+  /* Padding handled by wrapper */
+  background-color: rgba(220, 53, 69, 0.05);
+  /* Lighter error bg */
+  border: 1px solid rgba(220, 53, 69, 0.2);
   border-radius: var(--border-radius);
+  color: var(--text-color);
+  /* Use normal text color */
 }
 
 .error-message h3 {
   color: var(--danger-color);
-  margin-bottom: 15px;
+  /* margin-bottom: 15px; */
+  /* Handled by wrapper */
+}
+
+.error-message p {
+  color: var(--text-light);
+  /* Lighter text for message */
 }
 
 .error-details {
   font-family: monospace;
+  font-size: 0.9em;
   background-color: var(--bg-dark);
-  padding: 10px;
+  padding: 10px 15px;
   border-radius: var(--border-radius);
   margin-top: 15px;
   text-align: left;
+  color: var(--text-light);
+  word-break: break-word;
+  /* Allow long errors to wrap */
 }
 
 /* Responsive Design */
 @media (max-width: 992px) {
   .hero .container {
     flex-direction: column;
+    text-align: center;
+    /* Center text when stacked */
   }
 
   .hero-content {
+    order: 2;
+    /* Text below image */
     text-align: center;
+  }
+
+  .hero-image {
+    order: 1;
+    /* Image above text */
+    height: 350px;
+    /* Adjust height */
+    margin-bottom: 30px;
   }
 
   .hero p {
@@ -770,54 +1257,127 @@ footer {
   .cta-buttons {
     justify-content: center;
   }
-
-  .footer-content {
-    flex-direction: column;
-    gap: 40px;
-  }
-
-  .footer-brand {
-    max-width: 100%;
-    text-align: center;
-  }
-
-  .footer-links {
-    justify-content: space-between;
-    width: 100%;
-  }
 }
 
 @media (max-width: 768px) {
+  header .container {
+    flex-wrap: wrap;
+    /* Allow wrapping */
+    justify-content: space-between;
+  }
+
+  .logo {
+    flex-basis: 60%;
+    /* Give logo more space */
+  }
+
+  .header-controls {
+    flex-basis: 40%;
+    /* Controls take remaining space */
+    justify-content: flex-end;
+    /* Align controls to right */
+    /* Removed column direction */
+    gap: 10px;
+  }
+
+  .language-dropdown {
+    /* Reset margins if needed */
+  }
+
+
   .hero h2 {
-    font-size: 30px;
+    font-size: 32px;
   }
 
   .hero-image {
     height: 300px;
+    /* Smaller */
+    min-width: 0;
+    /* Allow shrinking */
   }
 
-  .lesson-content {
+  .character {
+    width: 50px;
+    height: 50px;
+    /* Smaller characters */
+  }
+
+  .character i {
+    font-size: 20px;
+  }
+
+
+  .lesson-content-wrapper {
+    padding: 20px;
+    /* Less padding on mobile */
+  }
+
+  .language-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    /* Adjust for smaller cards */
+    gap: 20px;
+  }
+
+  .language-card {
     padding: 20px;
   }
 
-  .lesson-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .language-card-flag {
+    width: 70px;
+    height: 70px;
   }
 
-  .lesson-title {
-    font-size: 24px;
+  .language-card-flag img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .floating-lesson-header {
+    top: 61px;
+    /* Adjust sticky top based on potentially smaller header */
+  }
+
+  .floating-lesson-header h2.centered-lesson-title {
+    font-size: 18px;
+    /* Smaller title */
+    padding: 0 45px;
+    /* Adjust padding */
+  }
+
+  .lesson-selector-toggle {
+    width: 36px;
+    height: 36px;
+    /* Smaller toggle */
+  }
+
+  .lesson-selector-toggle i {
+    font-size: 16px;
+  }
+
+  .lesson-selection-modal {
+    width: 95%;
+    max-width: none;
+    max-height: 90vh;
   }
 }
 
 @media (max-width: 576px) {
+  .logo h1 {
+    font-size: 22px;
+  }
+
+  .mascot-logo {
+    width: 35px;
+    height: 35px;
+  }
+
   .badge {
-    font-size: 14px;
+    font-size: 13px;
+    padding: 5px 12px;
   }
 
   .hero h2 {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .hero p {
@@ -826,12 +1386,30 @@ footer {
 
   .cta-buttons {
     flex-direction: column;
+    /* Stack buttons */
     width: 100%;
+    max-width: 300px;
+    /* Limit width */
+    margin: 0 auto;
+    /* Center */
   }
 
   .primary-btn,
   .secondary-btn {
     width: 100%;
+    /* Full width in column */
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  .hero-image {
+    height: 250px;
+  }
+
+  /* Even smaller */
+
+  .lesson-content-wrapper {
+    padding: 15px;
   }
 
   .lesson-content h2 {
@@ -839,16 +1417,57 @@ footer {
   }
 
   .lesson-content h3 {
+    font-size: 19px;
+  }
+
+  .lesson-content h4 {
+    font-size: 17px;
+  }
+
+  .language-grid-section {
+    padding: 40px 0;
+  }
+
+  .language-grid-section h2 {
+    font-size: 28px;
+  }
+
+  .language-grid {
+    grid-template-columns: 1fr;
+    /* Single column */
+  }
+
+
+  .floating-lesson-header h2.centered-lesson-title {
+    font-size: 16px;
+    /* Even smaller */
+    padding: 0 40px;
+    /* Adjust padding */
+  }
+
+  .modal-header h3 {
+    font-size: 16px;
+  }
+
+  .modal-close {
     font-size: 18px;
   }
 
-  .lesson-progress {
-    flex-direction: column;
-    gap: 15px;
+  .lesson-item {
+    padding: 12px 15px;
+    font-size: 14px;
   }
 
-  .lesson-progress button {
-    width: 100%;
-    justify-content: center;
+  .lesson-number,
+  .lesson-intro {
+    font-size: 13px;
+  }
+
+  .scroll-to-top {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    bottom: 20px;
+    right: 20px;
   }
 }

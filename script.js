@@ -1,359 +1,536 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // Theme toggle functionality
-  const themeToggleBtn = document.getElementById('themeToggle');
-  const themeIcon = themeToggleBtn.querySelector('i');
-
-  themeToggleBtn.addEventListener('click', function() {
-    document.body.classList.toggle('dark-theme');
-
-    if (document.body.classList.contains('dark-theme')) {
-      themeIcon.classList.remove('fa-moon');
-      themeIcon.classList.add('fa-sun');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      themeIcon.classList.remove('fa-sun');
-      themeIcon.classList.add('fa-moon');
-      localStorage.setItem('theme', 'light');
-    }
-  });
-
-  // Load saved theme from localStorage
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') {
-    document.body.classList.add('dark-theme');
-    themeIcon.classList.remove('fa-moon');
-    themeIcon.classList.add('fa-sun');
-  }
-
-  // Language selection
-  const customSelect = document.querySelector('.custom-select');
-  const selectedText = document.getElementById('selectedLanguage');
-  const selectItems = document.querySelector('.select-items');
-  const lessonContent = document.getElementById('lesson');
-  const placeholderContent = document.getElementById('placeholderContent');
-  const loadingIndicator = document.getElementById('loading');
-  const lessonSelector = document.getElementById('lessonSelector');
-  const lessonSelectorContainer = document.getElementById('lessonSelectorContainer');
-
-  // Toggle dropdown
-  selectedText.addEventListener('click', function() {
-    selectItems.classList.toggle('select-hide');
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!customSelect.contains(e.target)) {
-      selectItems.classList.add('select-hide');
-    }
-  });
-
-  // Handle language selection
-  document.querySelectorAll('.select-item').forEach(item => {
-    item.addEventListener('click', function() {
-      const selectedLanguage = this.getAttribute('data-value');
-      selectedText.innerHTML = selectedLanguage ? this.innerHTML : '<span>--Select a language--</span>';
-      selectItems.classList.add('select-hide');
-
-      if (selectedLanguage) {
-        // Show loading indicator
-        placeholderContent.style.display = 'none';
-        loadingIndicator.style.display = 'flex';
-        lessonSelectorContainer.style.display = 'none';
-
-        // Simulate loading delay
-        setTimeout(function() {
-          fetchLanguageContent(selectedLanguage);
-        }, 1000);
-      } else {
-        lessonContent.innerHTML = '';
-        placeholderContent.style.display = 'block';
-        loadingIndicator.style.display = 'none';
-        lessonSelectorContainer.style.display = 'none';
-      }
-    });
-  });
-
-  // Lesson selection
-  lessonSelector.addEventListener('change', function() {
-    const selectedLesson = this.value;
-    const lessons = JSON.parse(localStorage.getItem('currentLessons') || '[]');
-
-    if (selectedLesson && lessons.length > 0) {
-      // Find the selected lesson
-      const lesson = lessons.find(l => l.id === selectedLesson);
-      if (lesson) {
-        renderMarkdown(lesson.content);
-
-        // Scroll to top when changing lessons
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }
-    }
-  });
-
-  // Scroll to top button
-  const scrollToTopBtn = document.getElementById('scrollToTop');
-
-  window.addEventListener('scroll', function() {
-    if (window.pageYOffset > 300) {
-      scrollToTopBtn.classList.add('visible');
-    } else {
-      scrollToTopBtn.classList.remove('visible');
-    }
-  });
-
-  scrollToTopBtn.addEventListener('click', function() {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  });
-
-  // Set current year in footer
-  const yearElement = document.getElementById('currentYear');
-  if (yearElement) {
-    yearElement.textContent = new Date().getFullYear();
-  }
-
-  // Function to fetch language content
-  async function fetchLanguageContent(language) {
-    try {
-      const fileName = `./courses/${language}-lesson.md`;
-      // Fetch the markdown content from the file
-      const response = await fetch(fileName);
-
-      if (!response.ok) {
-        throw new Error(`Failed to load lesson content: ${response.status} ${response.statusText}`);
-      }
-
-      const markdown = await response.text();
-
-      // Split the markdown into lessons
-      const lessons = splitIntoLessons(markdown, language);
-
-      // Store lessons in localStorage for later use
-      localStorage.setItem('currentLessons', JSON.stringify(lessons));
-
-      // Populate lesson selector
-      populateLessonSelector(lessons);
-
-      // Display lesson selector
-      lessonSelectorContainer.style.display = 'block';
-
-      // Select the first lesson by default
-      if (lessons.length > 0) {
-        lessonSelector.value = lessons[0].id;
-        renderMarkdown(lessons[0].content);
-      } else {
-        renderComingSoon(language);
-      }
-    } catch (error) {
-      console.error('Error loading lesson:', error);
-      lessonContent.innerHTML = `
-        <div class="error-message">
-          <i class="fas fa-exclamation-circle" style="font-size: 40px; color: var(--danger-color); margin-bottom: 15px;"></i>
-          <h3>Failed to Load Lesson</h3>
-          <p>Sorry, we couldn't load the lesson content. Please try again later.</p>
-          <p class="error-details">${error.message}</p>
-        </div>
-      `;
-      lessonSelectorContainer.style.display = 'none';
-    } finally {
-      loadingIndicator.style.display = 'none';
-    }
-  }
-
-  // Function to split markdown into lessons based on ## headings
-  function splitIntoLessons(markdown, language) {
-    // Get the first line (main title)
-    const lines = markdown.split('\n');
-    let mainTitle = '';
-
-    // Find the main title (# heading)
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith('# ')) {
-        mainTitle = lines[i].substring(2).trim();
-        break;
-      }
-    }
-
-    // Split by ## headings
-    const sections = markdown.split(/^## /gm);
-
-    // The first section might be the introduction or empty, check if it starts with a # heading
-    const lessons = [];
-
-    for (let i = 0; i < sections.length; i++) {
-      let section = sections[i].trim();
-
-      // Skip empty sections
-      if (!section) continue;
-
-      // For the first section, check if it's an intro or already a lesson
-      if (i === 0 && !section.startsWith('#')) {
-        // This is an introduction section
-        lessons.push({
-          id: `${language}-intro`,
-          title: 'Introduction',
-          content: section
-        });
-      } else {
-        // This is a lesson section, get the title from the first line
-        const sectionLines = section.split('\n');
-        const title = sectionLines[0].trim();
-
-        // Reconstruct the section with ## prefix for proper rendering
-        const content = `## ${section}`;
-
-        lessons.push({
-          id: `${language}-lesson-${i}`,
-          title: title,
-          content: content
-        });
-      }
-    }
-
-    return lessons;
-  }
-
-  // Function to populate lesson selector
-  function populateLessonSelector(lessons) {
-    // Clear previous options
-    lessonSelector.innerHTML = '';
-
-    // Add default option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = '--Select a lesson--';
-    lessonSelector.appendChild(defaultOption);
-
-    // Add lesson options
-    lessons.forEach(lesson => {
-      const option = document.createElement('option');
-      option.value = lesson.id;
-      option.textContent = lesson.title;
-      lessonSelector.appendChild(option);
-    });
-  }
-
-  // Configure marked.js to handle our custom styling needs
+// Initialize marked.js renderer and options globally
+if (typeof marked !== 'undefined') {
   marked.setOptions({
     renderer: new marked.Renderer(),
-    highlight: null,
+    highlight: null, // No syntax highlighting by default
     pedantic: false,
-    gfm: true,
-    breaks: true,
-    sanitize: false, // Allow HTML in the markdown
+    gfm: true,    // Use GitHub Flavored Markdown
+    breaks: true,   // Convert single line breaks to <br>
+    sanitize: false, // IMPORTANT: Only use false if Markdown source is trusted
     smartLists: true,
     smartypants: false,
     xhtml: false
   });
+} else {
+  console.error("Marked.js library not loaded!");
+}
 
-  function renderMarkdown(markdown) {
-    if (typeof marked === 'undefined') {
-      console.error("marked.js library is not loaded.");
-      lessonContent.innerHTML = "<p>Error: Markdown parser not available.</p>";
-      return;
+// Vue application
+new Vue({
+  el: '#app',
+  data: {
+    // App state
+    currentView: 'hero', // 'hero', 'language-grid', 'lesson-selector'
+    loading: false,
+    darkTheme: false,
+    showHeaderLanguageDropdown: false,
+    showLessonModal: false,
+    showScrollTop: false,
+
+    // Content
+    selectedLanguage: null, // { name, code, flagCode, speakers }
+    selectedLessonId: '',   // e.g., 'german-lesson-1'
+    lessonContent: null,    // HTML content of the current lesson
+
+    // Error handling
+    errorMessage: '',
+    errorTitle: 'Oops! Something went wrong.',
+    errorDetails: '',
+
+    // Placeholder content
+    placeholderIcon: 'fas fa-book-open',
+    placeholderTitle: 'Welcome to LingoMitra!',
+    placeholderText: 'Your journey to mastering new languages begins here. Select a language to get started.',
+
+    // Data
+    lessons: [], // Array of { id, title, content }
+    comingSoon: false,
+    currentYear: new Date().getFullYear(),
+
+    // Available languages
+    languages: [
+      { name: 'German', code: 'german', flagCode: 'de', speakers: 132 },
+      { name: 'Spanish', code: 'spanish', flagCode: 'es', speakers: 534 },
+      { name: 'French', code: 'french', flagCode: 'fr', speakers: 280 },
+      { name: 'Hindi', code: 'hindi', flagCode: 'hi', speakers: 615 },
+      { name: 'Chinese', code: 'chinese', flagCode: 'zh', speakers: 1120 },
+      { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 }
+      // Add more languages here
+    ]
+  },
+
+  computed: {
+    // Get the current lesson object based on selectedLessonId
+    currentLesson() {
+      if (!this.selectedLessonId || !this.lessons || this.lessons.length === 0) return null;
+      return this.lessons.find(lesson => lesson.id === this.selectedLessonId) || null;
+    }
+  },
+
+  created() {
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.darkTheme = true;
+      document.body.classList.add('dark-theme');
+    } else {
+      // Ensure light theme is default if no setting or invalid setting
+      this.darkTheme = false;
+      document.body.classList.remove('dark-theme');
+      localStorage.setItem('theme', 'light');
     }
 
-    try {
-      // 1. Let marked.js handle all standard Markdown conversion first.
-      //    It will correctly convert ein**en** to ein<strong>en</strong>, etc.
-      let html = marked.parse(markdown);
-
-      // --- DEBUGGING ---
-      // Uncomment the next line to see the raw HTML output from marked
-      // *before* any custom replacements are applied. Check your browser's
-      // developer console. You should see <strong> tags here if ** was used.
-      // console.log("Raw HTML from marked:", html);
-      // --- END DEBUGGING ---
-
-
-      // 2. Apply custom transformations to the generated HTML:
-
-      // a) Wrap tables for responsive scrolling
-      //    Ensures <table> is immediately inside .table-container
-      html = html.replace(/<table>/g, '<div class="table-container"><table>');
-      html = html.replace(/<\/table>/g, '</table></div>');
+    // Check if user has visited before to potentially skip hero
+    const hasVisitedBefore = localStorage.getItem('hasVisited');
+    if (hasVisitedBefore === 'true') {
+      this.currentView = 'language-grid';
+      // Reset placeholder for returning users who haven't selected a language yet
+      this.placeholderTitle = 'Choose Your Language';
+      this.placeholderText = 'Select a language from the grid to start learning.';
+      this.placeholderIcon = 'fas fa-language';
+    } else {
+      // Set initial placeholder text for first-time visitors
+      this.placeholderTitle = 'Welcome to LingoMitra!';
+      this.placeholderText = 'Your journey to mastering new languages begins here. Click "Get Started" above or choose a language below.';
+      this.placeholderIcon = 'fas fa-book-open';
+    }
 
 
-      // b) Format "Thinking Points"
-      //    Looks for the specific blockquote structure generated by marked
-      //    from "> **Thinking Point: Title** \n > Content..."
-      html = html.replace(
-        /<blockquote>\s*<p>\s*<strong>Thinking Point:(.*?)<\/strong>([\s\S]*?)<\/p>\s*<\/blockquote>/gs,
-        (match, title, content) => {
-          // Trim potential whitespace and ensure content is wrapped in <p> if not already
-          const trimmedContent = content.trim();
-          const formattedContent = trimmedContent.startsWith('<p>') ? trimmedContent : `<p>${trimmedContent}</p>`;
-          return `<div class="thinking-point"><div class="thinking-header">Thinking Point:${title.trim()}</div>${formattedContent}</div>`;
+    // Add global event listeners
+    document.addEventListener('click', this.handleOutsideClick);
+    window.addEventListener('scroll', this.handleScroll);
+    document.addEventListener('keydown', this.handleKeyDown);
+  },
+
+  beforeDestroy() {
+    // Clean up global event listeners
+    document.removeEventListener('click', this.handleOutsideClick);
+    window.removeEventListener('scroll', this.handleScroll);
+    document.removeEventListener('keydown', this.handleKeyDown);
+  },
+
+  methods: {
+    // --- Theme Handling ---
+    toggleTheme() {
+      this.darkTheme = !this.darkTheme;
+      document.body.classList.toggle('dark-theme');
+      localStorage.setItem('theme', this.darkTheme ? 'dark' : 'light');
+    },
+
+    // --- Navigation ---
+    goToLanguageSelection() {
+      this.currentView = 'language-grid';
+      this.resetLessonState(); // Clear language/lesson specific data
+      this.showHeaderLanguageDropdown = false; // Ensure dropdown is closed
+
+      // Mark user as having visited (for skipping hero next time)
+      localStorage.setItem('hasVisited', 'true');
+
+      // Optionally scroll to the top of the language grid section
+      this.$nextTick(() => {
+        const gridSection = document.querySelector('.language-grid-section');
+        if (gridSection) {
+          gridSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      );
-      // Added 's' flag to regex for multi-line content within the blockquote paragraph.
+      });
+    },
+
+    // --- Dropdown Handling ---
+    toggleHeaderLanguageDropdown() {
+      this.showHeaderLanguageDropdown = !this.showHeaderLanguageDropdown;
+    },
+
+    // --- Get Lesson Number ---
+    getLessonNumber(lessonId) {
+      if (!lessonId || typeof lessonId !== 'string') return null; // Basic validation
+      // Check if it's a numbered lesson ID (e.g., 'german-lesson-30')
+      if (lessonId.includes('-lesson-')) {
+        const parts = lessonId.split('-lesson-');
+        // Return the part after '-lesson-' if it exists and is a number
+        return parts.length > 1 && !isNaN(parts[1]) ? parts[1] : null;
+      }
+      // Return null if it's not a numbered lesson ID (like '-intro')
+      return null;
+    },
+
+    handleOutsideClick(event) {
+      // Close header language dropdown if clicked outside
+      const headerDropdown = this.$el.querySelector('.language-dropdown'); // Use $el to scope query
+      if (this.showHeaderLanguageDropdown && headerDropdown && !headerDropdown.contains(event.target)) {
+        this.showHeaderLanguageDropdown = false;
+      }
+      // Close lesson modal if clicked on the overlay
+      const modalOverlay = this.$el.querySelector('.modal-overlay');
+      if (this.showLessonModal && event.target === modalOverlay) {
+        this.closeLessonModal();
+      }
+    },
+
+    // --- Lesson Modal Handling ---
+    openLessonModal() {
+      this.showLessonModal = true;
+      document.body.classList.add('modal-open');
+      // Add 'show' class for CSS transitions after the element is in the DOM
+      this.$nextTick(() => {
+        const modal = this.$el.querySelector('.lesson-selection-modal');
+        const overlay = this.$el.querySelector('.modal-overlay');
+        if (modal) modal.classList.add('show');
+        if (overlay) overlay.classList.add('show');
+      });
+    },
+
+    closeLessonModal() {
+      // Remove 'show' class to trigger exit transitions
+      const modal = this.$el.querySelector('.lesson-selection-modal');
+      const overlay = this.$el.querySelector('.modal-overlay');
+      if (modal) modal.classList.remove('show');
+      if (overlay) overlay.classList.remove('show');
+
+      // Wait for transitions to finish before removing from DOM and unlocking scroll
+      setTimeout(() => {
+        this.showLessonModal = false;
+        document.body.classList.remove('modal-open');
+      }, 300); // Match CSS transition duration
+    },
 
 
-      // c) Format "Practice Answers"
-      //    Replaces the specific introductory paragraph and wraps content until the next <hr>
+    selectLessonFromModal(lessonId) {
+      // Check if the selected lesson is already the current one
+      if (lessonId === this.selectedLessonId) {
+        this.closeLessonModal(); // Just close modal if same lesson clicked
+        return;
+      }
+      this.selectedLessonId = lessonId;
+      this.selectLesson(); // Load the new lesson content
+      this.closeLessonModal();
+    },
 
-      // Find the start first to avoid unnecessary complex regex later
-      const practiceStartPattern = /<p><em><strong>Practice Answers:<\/strong><\/em><\/p>/g;
-      if (practiceStartPattern.test(html)) {
-        // Replace the header paragraph with the opening div and h4
-        html = html.replace(practiceStartPattern, '<div class="practice-answers"><h4>Practice Answers:</h4>');
+    // --- Keyboard Handling ---
+    handleKeyDown(event) {
+      // Close modal on Escape key press
+      if (event.key === 'Escape' && this.showLessonModal) {
+        this.closeLessonModal();
+      }
+    },
 
-        // Now, find the *first* <hr> *after* the opening div and insert </div> before it.
-        // This is more robust than a single regex trying to do everything.
-        const openDivMarker = '<div class="practice-answers">';
-        const openDivIndex = html.indexOf(openDivMarker);
-
-        if (openDivIndex !== -1) {
-          const hrIndex = html.indexOf('<hr>', openDivIndex + openDivMarker.length);
-
-          if (hrIndex !== -1) {
-            // Insert the closing div right before the <hr>
-            html = html.substring(0, hrIndex) + '</div>' + html.substring(hrIndex);
-          } else {
-            // If no <hr> is found after the practice answers start,
-            // the closing </div> won't be added. This might be okay if it's the
-            // last element, but log a warning.
-            console.warn("Practice Answers section started but no subsequent <hr> found to mark its end. The closing </div> might be missing.");
-            // Optionally, you could try adding the </div> at the very end, but it's risky:
-            // html += '</div>'; // <-- Use with caution
-          }
-        }
+    // --- Language & Lesson Loading ---
+    selectLanguage(language) {
+      // If the same language is clicked again from the dropdown, do nothing
+      if (this.selectedLanguage && this.selectedLanguage.code === language.code && this.currentView === 'lesson-selector') {
+        this.showHeaderLanguageDropdown = false; // Close dropdown
+        return;
       }
 
-      // 3. Inject the final HTML into the DOM
-      lessonContent.innerHTML = html;
+      this.selectedLanguage = language;
+      this.showHeaderLanguageDropdown = false; // Close dropdown after selection
 
-    } catch (error) {
-      console.error("Error rendering Markdown:", error);
-      lessonContent.innerHTML = `<div class="error-message">
-          <i class="fas fa-exclamation-circle" style="font-size: 40px; color: var(--danger-color); margin-bottom: 15px;"></i>
-          <h3>Markdown Rendering Failed</h3>
-          <p>Sorry, we couldn't display the lesson content correctly.</p>
-          <p class="error-details">${error.message}</p>
-        </div>`;
+      if (language) {
+        this.loading = true;
+        this.resetLessonState(false); // Reset lesson content but keep language selected
+
+        // Fetch language content asynchronously
+        // Use a small delay for visual feedback, can be removed if fetch is fast
+        setTimeout(() => {
+          this.fetchLanguageContent(language.code);
+        }, 300);
+
+      } else {
+        // Should not happen with current UI, but good fallback
+        this.goToLanguageSelection();
+      }
+    },
+
+    async fetchLanguageContent(languageCode) {
+      this.loading = true; // Ensure loading is true
+      this.errorMessage = ''; // Clear previous errors
+      this.errorDetails = '';
+      this.comingSoon = false;
+
+      try {
+        // Construct filename relative to the HTML file's location
+        const fileName = `./courses/${languageCode}-lesson.md`; // Consistent naming convention
+        const response = await fetch(fileName);
+
+        if (!response.ok) {
+          // Handle HTTP errors (e.g., 404 Not Found)
+          if (response.status === 404) {
+            console.warn(`Lesson file not found: ${fileName}`);
+            this.renderComingSoon(); // Show coming soon if file doesn't exist
+          } else {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+          }
+        } else {
+          const markdown = await response.text();
+
+          // Split markdown into lesson objects { id, title, content }
+          this.lessons = this.splitIntoLessons(markdown, languageCode);
+
+          if (this.lessons && this.lessons.length > 0) {
+            // Store lessons (optional, consider if needed for offline/persistence)
+            // localStorage.setItem(`lessons_${languageCode}`, JSON.stringify(this.lessons));
+
+            this.currentView = 'lesson-selector'; // Switch view
+
+            // Select the first lesson by default
+            this.selectedLessonId = this.lessons[0].id;
+            this.renderMarkdown(this.lessons[0].content);
+
+            // Scroll to the top of the content area after loading
+            this.$nextTick(() => this.scrollToContentTop());
+
+          } else {
+            // Handle case where file exists but has no valid lessons (e.g., empty or wrong format)
+            console.warn(`No lessons found in file: ${fileName}`);
+            this.renderComingSoon();
+          }
+        }
+
+      } catch (error) {
+        console.error('Error loading or processing lesson:', error);
+        this.errorMessage = 'Sorry, we couldn\'t load the lessons for this language.';
+        this.errorTitle = 'Failed to Load Lessons';
+        this.errorDetails = error.message; // Provide specific error details
+        this.resetLessonState(); // Reset fully on critical error
+        this.currentView = 'lesson-selector'; // Stay on lesson view to show error
+      } finally {
+        this.loading = false; // Turn off loading indicator regardless of outcome
+      }
+    },
+
+    splitIntoLessons(markdown, languageCode) {
+      const lessons = [];
+      if (!markdown) return lessons;
+
+      // Split the markdown content by '## ' which marks the start of a new lesson heading.
+      // The /gm flags ensure it works across multiple lines and globally.
+      // We keep the delimiter '## ' as part of the *next* section using a positive lookahead.
+      const sections = markdown.split(/(?=^##\s)/gm);
+
+      let introContent = '';
+      let lessonIndex = 1; // Start lesson numbering from 1
+
+      sections.forEach((section, index) => {
+        section = section.trim();
+        if (!section) return; // Skip empty sections
+
+        if (index === 0 && !section.startsWith('## ')) {
+          // If the first section doesn't start with '## ', treat it as the introduction.
+          introContent = section;
+          // Add intro only if it has content
+          if (introContent) {
+            lessons.push({
+              id: `${languageCode}-intro`,
+              // Try to find a H1 title for the intro, otherwise use default
+              title: (introContent.match(/^#\s+(.*)/)?.[1] || 'Introduction').trim(),
+              content: introContent
+            });
+          }
+        } else if (section.startsWith('## ')) {
+          // This section is a lesson
+          const lines = section.split('\n');
+          const title = lines[0].substring(3).trim(); // Get title from '## Title'
+          const content = section; // Keep the '## ' for markdown rendering
+
+          lessons.push({
+            id: `${languageCode}-lesson-${lessonIndex}`,
+            title: title,
+            content: content
+          });
+          lessonIndex++;
+        } else if (index === 0 && section.startsWith('## ')) {
+          // Handle case where the *first* section IS a lesson (starts with ##)
+          const lines = section.split('\n');
+          const title = lines[0].substring(3).trim();
+          const content = section;
+          lessons.push({
+            id: `${languageCode}-lesson-${lessonIndex}`,
+            title: title,
+            content: content
+          });
+          lessonIndex++;
+        }
+      });
+
+      return lessons;
+    },
+
+
+    // Select and render a specific lesson by its ID
+    selectLesson() {
+      if (this.selectedLessonId && this.lessons.length > 0) {
+        const lesson = this.lessons.find(l => l.id === this.selectedLessonId);
+        if (lesson) {
+          this.renderMarkdown(lesson.content);
+          this.$nextTick(() => this.scrollToContentTop()); // Scroll after content update
+        } else {
+          console.warn("Selected lesson ID not found:", this.selectedLessonId);
+          this.lessonContent = '<p>Error: Could not find the selected lesson.</p>'; // Show error in content area
+        }
+      } else {
+        // If no lesson selected (e.g., after language change before first lesson loads)
+        // this.lessonContent = null; // Keep it null or show placeholder
+      }
+    },
+
+    // Render Markdown to HTML with custom processing
+    renderMarkdown(markdown) {
+      if (typeof marked === 'undefined') {
+        console.error("marked.js library is not loaded.");
+        this.errorMessage = "Error: Markdown parser not available.";
+        this.errorTitle = "Display Error";
+        this.lessonContent = null;
+        return;
+      }
+      if (!markdown) {
+        this.lessonContent = ''; // Clear content if markdown is empty
+        return;
+      }
+
+      try {
+        // 1. Pre-processing Markdown (Optional: if needed before parsing)
+        //    Example: Remove specific tags or patterns if Marked can't handle them
+        let processedMarkdown = markdown.replace(/^##\s+(?:Lesson\s+)?\d+:\s*/, '').trim();
+        // If the above didn't remove anything (e.g., it was an intro without ## Lesson),
+        // check if it starts with just a # Title (like an intro H1) and remove that too
+        // ONLY IF it's likely the main title we don't want repeated. Be careful with this.
+        // Let's stick to removing only the ## Lesson XX: pattern for now to avoid removing legitimate H1s.
+
+        // Convert the *processed* markdown (without the main ## heading) to HTML
+        let html = marked.parse(processedMarkdown);
+        // 3. Post-processing HTML (Applying custom styles/wrappers)
+
+        // a) Wrap tables for responsive scrolling
+        //    Use a more robust regex to handle potential attributes on table tags
+        html = html.replace(/<table([\s\S]*?)>/g, '<div class="table-container"><table$1>');
+        html = html.replace(/<\/table>/g, '</table></div>');
+
+        // b) Format "Thinking Points" Blockquotes
+        //    Regex looks for <blockquote><p><strong>Thinking Point: optional title</strong> content </p></blockquote>
+        //    It captures the optional title and the main content.
+        html = html.replace(
+          /<blockquote>\s*<p>\s*<strong>Thinking Point:?(.*?)<\/strong>([\s\S]*?)<\/p>\s*<\/blockquote>/gi, // Case-insensitive
+          (match, title, content) => {
+            const trimmedTitle = title ? title.trim() : ''; // Handle optional title
+            // Ensure content is wrapped correctly, remove surrounding <p> tags if present from blockquote parsing
+            let formattedContent = content.trim();
+            // Basic check to remove outer <p> if content itself doesn't contain block elements like lists
+            // if (!formattedContent.match(/<(ul|ol|p|div|h[1-6]|blockquote|pre|table)[^>]*>/i)) {
+            //      formattedContent = formattedContent.replace(/^<p>/i, '').replace(/<\/p>$/i, '').trim();
+            // }
+
+            return `<div class="thinking-point"><div class="thinking-header">Thinking Point${trimmedTitle ? ': ' + trimmedTitle : ''}</div><div>${formattedContent}</div></div>`;
+          }
+        );
+
+        // c) Format "Practice Answers" Sections
+        //    Look for a specific marker paragraph and wrap subsequent content until an <hr> or end.
+        const practiceStartMarker = '<p><em><strong>Practice Answers:</strong></em></p>'; // Exact marker expected from Markdown
+        let practiceEndMarker = '<hr>'; // Default end marker
+        let startIndex = html.indexOf(practiceStartMarker);
+
+        while (startIndex !== -1) {
+          // Replace the marker with the starting div/h4
+          const replacementStart = '<div class="practice-answers"><h4>Practice Answers:</h4>';
+          html = html.substring(0, startIndex) + replacementStart + html.substring(startIndex + practiceStartMarker.length);
+
+          // Find the end marker (<hr>) after the start of the replacement
+          let endIndex = html.indexOf(practiceEndMarker, startIndex + replacementStart.length);
+
+          if (endIndex !== -1) {
+            // Insert the closing div before the end marker
+            html = html.substring(0, endIndex) + '</div>' + html.substring(endIndex);
+          } else {
+            // If no <hr> found, assume it goes to the end of the current block/html
+            html += '</div>'; // Append closing div at the very end
+            console.warn("Practice Answers section started but no subsequent <hr> found. Closed at end of content.");
+            break; // Exit loop as we closed at the end
+          }
+
+          // Look for the next practice section *after* the one we just processed
+          startIndex = html.indexOf(practiceStartMarker, startIndex + replacementStart.length + '</div>'.length + practiceEndMarker.length);
+        }
+
+
+        // 4. Update lesson content
+        this.lessonContent = html;
+        this.errorMessage = ''; // Clear any previous errors
+        this.comingSoon = false; // Ensure coming soon is off
+
+      } catch (error) {
+        console.error("Error rendering Markdown:", error);
+        this.errorMessage = "Sorry, we couldn't display the lesson content correctly.";
+        this.errorTitle = "Display Error";
+        this.errorDetails = error.message;
+        this.lessonContent = null; // Clear content on rendering error
+      }
+    },
+
+    // --- UI Helpers ---
+    renderComingSoon() {
+      this.comingSoon = true;
+      this.lessonContent = null;
+      this.lessons = [];
+      this.selectedLessonId = '';
+      this.errorMessage = ''; // Clear errors when showing coming soon
+      this.currentView = 'lesson-selector'; // Ensure view is correct
+    },
+
+    resetLessonState(resetLanguage = true) {
+      if (resetLanguage) {
+        this.selectedLanguage = null;
+      }
+      this.lessons = [];
+      this.selectedLessonId = '';
+      this.lessonContent = null;
+      this.errorMessage = '';
+      this.errorDetails = '';
+      this.comingSoon = false;
+      // Don't reset currentView here, let the calling function decide
+    },
+
+    // Format lesson title for display (e.g., in modal, floating header)
+    formatLessonTitle(title) {
+      if (!title) return '';
+      // Removes "Lesson X: " or just "X: " if present at the start
+      return title.replace(/^Lesson\s+\d+:\s*|^(\d+):\s*/i, '').trim();
+    },
+
+
+    // Scroll to top button visibility
+    handleScroll() {
+      this.showScrollTop = window.pageYOffset > 300;
+
+      // Optional: Close header dropdown on scroll
+      // if (this.showHeaderLanguageDropdown) {
+      //     this.showHeaderLanguageDropdown = false;
+      // }
+    },
+
+    // Scroll to top action
+    scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    // Scroll to the top of the main content area
+    scrollToContentTop() {
+      // Target the wrapper or the main content element
+      const contentArea = this.$el.querySelector('.content');
+      if (contentArea) {
+        // Calculate offset considering the sticky header(s) height
+        const headerHeight = this.$el.querySelector('header')?.offsetHeight || 0;
+        const floatingHeaderHeight = this.$el.querySelector('.floating-lesson-header')?.offsetHeight || 0;
+        const offset = headerHeight + floatingHeaderHeight + 20; // Add some extra padding
+
+        const elementPosition = contentArea.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
     }
-  }
-
-
-  // Function to show coming soon message
-  function renderComingSoon(language) {
-    const capitalizedLanguage = language.charAt(0).toUpperCase() + language.slice(1);
-
-    lessonContent.innerHTML = `
-      <div class="coming-soon">
-        <div class="placeholder-icon">
-          <i class="fas fa-clock"></i>
-        </div>
-        <h3>${capitalizedLanguage} Lessons Coming Soon!</h3>
-        <p>We're working hard to create a comprehensive ${language} learning experience. 
-        Check back soon or subscribe to our newsletter to be notified when it's ready.</p>
-        <button class="primary-btn" style="margin-top: 20px;">Get Notified</button>
-      </div>
-    `;
   }
 });
