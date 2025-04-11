@@ -1280,9 +1280,27 @@ footer {
     gap: 10px;
   }
 
-  .language-dropdown {
-    /* Reset margins if needed */
+  .selected-language span {
+    display: none;
+    /* Hide the language name text */
   }
+
+  .selected-language {
+    padding: 8px 10px;
+    /* Adjust padding for a smaller button */
+    /* Maybe make it slightly more square-ish if desired */
+  }
+
+  .selected-language .language-flag {
+    margin-right: 0;
+    /* Remove margin since text is gone */
+  }
+
+  .selected-language i.fa-chevron-down {
+    margin-left: 6px;
+    /* Slightly reduce space before the arrow */
+  }
+
 
 
   .hero h2 {
