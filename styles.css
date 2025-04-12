@@ -1,3 +1,5 @@
+/* styles.css */
+
 /* Root Variables */
 :root {
   --primary-color: #ff6600;
@@ -31,7 +33,6 @@
   --bg-dark: #333333;
   --border-color: #444444;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  /* Keep primary/secondary colors same or adjust if needed */
 }
 
 /* General Reset */
@@ -43,7 +44,6 @@
 
 html {
   scroll-behavior: smooth;
-  /* Smooth scroll for anchor links and JS scrolls */
 }
 
 body {
@@ -52,7 +52,6 @@ body {
   background-color: var(--bg-color);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
-  /* Only transition colors */
 }
 
 .container {
@@ -78,7 +77,6 @@ button {
   border: none;
   transition: var(--transition);
   background: none;
-  /* Ensure buttons don't have default bg */
 }
 
 ul {
@@ -94,7 +92,6 @@ header {
   z-index: 100;
   padding: 15px 0;
   transition: background-color 0.3s ease;
-  /* Added transition */
 }
 
 header .container {
@@ -117,17 +114,14 @@ header .container {
 
 .language-flag {
   width: 20px;
-  /* Slightly smaller */
   height: 20px;
   margin-right: 8px;
   vertical-align: middle;
   border-radius: 3px;
-  /* Soften edges */
 }
 
 .logo h1 {
   font-size: 26px;
-  /* Slightly smaller */
   font-weight: 800;
   color: var(--primary-color);
 }
@@ -136,12 +130,10 @@ header .container {
   display: flex;
   align-items: center;
   gap: 15px;
-  /* Added gap */
 }
 
 .theme-container {
   display: flex;
-  /* No change */
   align-items: center;
 }
 
@@ -155,7 +147,6 @@ header .container {
   align-items: center;
   justify-content: center;
   width: 40px;
-  /* Fixed size */
   height: 40px;
   transition: var(--transition);
 }
@@ -165,10 +156,8 @@ header .container {
   transform: rotate(15deg);
 }
 
-/* Header Language Selector Styles */
 .language-dropdown {
   position: relative;
-  /* margin-right: 20px; Removed, using gap in header-controls now */
 }
 
 .selected-language {
@@ -180,7 +169,6 @@ header .container {
   cursor: pointer;
   transition: var(--transition);
   border: 1px solid var(--border-color);
-  /* Added subtle border */
 }
 
 .selected-language:hover {
@@ -204,14 +192,12 @@ header .container {
 }
 
 .language-dropdown .selected-language.open i {
-  /* Rotate arrow when open */
   transform: rotate(180deg);
 }
 
 .language-dropdown-content {
   position: absolute;
   top: calc(100% + 5px);
-  /* Add slight gap */
   right: 0;
   min-width: 200px;
   background-color: var(--bg-color);
@@ -219,7 +205,6 @@ header .container {
   box-shadow: var(--shadow);
   padding: 10px 0;
   z-index: 101;
-  /* Above header */
   display: none;
   opacity: 0;
   transform: translateY(-10px);
@@ -239,7 +224,6 @@ header .container {
   cursor: pointer;
   transition: background-color 0.2s ease;
   color: var(--text-color);
-  /* Ensure text color */
 }
 
 .dropdown-item:hover {
@@ -254,7 +238,6 @@ header .container {
   margin-right: 10px;
   color: var(--primary-color);
   width: 16px;
-  /* Align icons */
   text-align: center;
 }
 
@@ -265,7 +248,6 @@ header .container {
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--border-color);
-  /* Separator */
 }
 
 .hero .container {
@@ -284,23 +266,18 @@ header .container {
   background-color: rgba(255, 102, 0, 0.1);
   color: var(--primary-color);
   padding: 6px 14px;
-  /* Slightly smaller */
   border-radius: 20px;
   font-weight: 700;
-  /* Bolder */
   margin-bottom: 20px;
   font-size: 14px;
-  /* Smaller */
 }
 
 .hero h2 {
   font-size: 40px;
-  /* Larger */
   font-weight: 800;
   margin-bottom: 20px;
   line-height: 1.2;
   color: var(--text-color);
-  /* Ensure color */
 }
 
 .hero p {
@@ -320,12 +297,10 @@ header .container {
   background-color: var(--primary-color);
   color: white;
   font-weight: 700;
-  /* Bolder */
   padding: 12px 24px;
   border-radius: var(--border-radius);
   font-size: 16px;
   text-transform: uppercase;
-  /* Style */
   letter-spacing: 0.5px;
 }
 
@@ -356,13 +331,11 @@ header .container {
   position: relative;
   height: 400px;
   min-width: 300px;
-  /* Ensure it has some width */
 }
 
 .character {
   position: absolute;
   background-color: var(--bg-color);
-  /* Use variable */
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -371,9 +344,7 @@ header .container {
   justify-content: center;
   box-shadow: var(--shadow);
   animation: float 6s infinite ease-in-out;
-  /* Slower animation */
   border: 2px solid var(--bg-light);
-  /* Subtle border */
 }
 
 .character i {
@@ -381,7 +352,6 @@ header .container {
   color: var(--primary-color);
 }
 
-/* Character positions (adjust as needed) */
 .character-1 {
   top: 25%;
   left: 15%;
@@ -413,7 +383,6 @@ header .container {
   animation-delay: 0.5s;
 }
 
-
 @keyframes float {
 
   0%,
@@ -430,7 +399,6 @@ header .container {
 .language-grid-section {
   padding: 60px 0;
   background-color: var(--bg-light);
-  /* Consistent background */
 }
 
 .language-grid-section h2 {
@@ -443,18 +411,15 @@ header .container {
 
 .section-intro {
   max-width: 700px;
-  /* Slightly wider */
   margin: 0 auto 40px;
   text-align: center;
   color: var(--text-light);
   font-size: 17px;
-  /* Slightly larger */
 }
 
 .language-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  /* Adjust minmax */
   gap: 30px;
   margin-top: 40px;
 }
@@ -466,7 +431,6 @@ header .container {
   padding: 30px;
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  /* Faster transition */
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -482,7 +446,6 @@ header .container {
 
 .language-card-flag {
   width: 80px;
-  /* Smaller flag container */
   height: 80px;
   margin: 0 auto 20px;
   background-color: var(--bg-light);
@@ -492,21 +455,17 @@ header .container {
   justify-content: center;
   overflow: hidden;
   border: 3px solid var(--bg-color);
-  /* Inner border */
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  /* Subtle shadow */
 }
 
 .language-card-flag img {
   width: 45px;
-  /* Adjust flag size */
   height: 45px;
   object-fit: contain;
 }
 
 .language-card h3 {
   margin-bottom: 8px;
-  /* Less space */
   font-size: 20px;
   font-weight: 700;
   color: var(--text-color);
@@ -515,7 +474,6 @@ header .container {
 .speakers {
   color: var(--text-light);
   margin-bottom: 25px;
-  /* More space before button */
   font-size: 14px;
 }
 
@@ -524,16 +482,13 @@ header .container {
   color: white;
   border: none;
   padding: 10px 20px;
-  /* Smaller button */
   border-radius: var(--border-radius);
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
   transition: var(--transition);
   width: auto;
-  /* Don't force full width */
   margin-top: auto;
-  /* Pushes button to bottom if card heights vary */
 }
 
 .language-btn:hover {
@@ -545,38 +500,27 @@ header .container {
   background-color: var(--bg-color);
   box-shadow: var(--shadow);
   padding: 10px 0;
-  /* Reduced padding */
   position: sticky;
-  /* top: 0; Needs to be below main header */
   top: 71px;
-  /* Adjust based on actual header height */
   z-index: 90;
-  /* margin-bottom: 30px; Removed, padding added to main content */
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.3s ease;
-  /* Added transition */
 }
 
 .lesson-header-content {
   display: flex;
-  /* justify-content: flex-start; Original */
   align-items: center;
   position: relative;
-  /* For centering title */
 }
 
 .floating-lesson-header h2.centered-lesson-title {
   font-size: 20px;
-  /* Slightly smaller */
   margin: 0;
   color: var(--text-color);
   font-weight: 700;
   text-align: center;
-  /* Center the title */
   flex-grow: 1;
-  /* Allow title to take space */
   padding: 0 50px;
-  /* Add padding to prevent overlap with icon/future elements */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -593,9 +537,6 @@ header .container {
   border-radius: 50%;
   cursor: pointer;
   transition: var(--transition);
-  /* Position absolute removed, use flex order or margins if needed */
-  /* position: absolute; */
-  /* left: 0; */
 }
 
 .lesson-selector-toggle:hover {
@@ -603,12 +544,10 @@ header .container {
   border-color: var(--text-light);
 }
 
-/* Style for the icon inside the toggle */
 .lesson-selector-toggle i {
   color: var(--primary-color);
   font-size: 18px;
 }
-
 
 /* Modal Styles */
 .modal-overlay {
@@ -618,16 +557,13 @@ header .container {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.6);
-  /* Darker overlay */
   z-index: 1000;
   backdrop-filter: blur(4px);
-  /* Stronger blur */
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .modal-overlay.show {
-  /* Added class for transition */
   opacity: 1;
 }
 
@@ -636,14 +572,11 @@ header .container {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.95);
-  /* Initial state for transition */
   background-color: var(--bg-color);
   border-radius: var(--border-radius);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  /* Stronger shadow */
   width: 90%;
   max-width: 550px;
-  /* Slightly narrower */
   max-height: 85vh;
   z-index: 1001;
   overflow: hidden;
@@ -654,11 +587,9 @@ header .container {
 }
 
 .lesson-selection-modal.show {
-  /* Added class for transition */
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
-
 
 .modal-header {
   display: flex;
@@ -667,12 +598,10 @@ header .container {
   padding: 15px 20px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  /* Prevent header from shrinking */
 }
 
 .modal-header h3 {
   font-size: 18px;
-  /* Smaller */
   font-weight: 700;
   color: var(--text-color);
   margin: 0;
@@ -682,7 +611,6 @@ header .container {
   background-color: transparent;
   color: var(--text-light);
   font-size: 20px;
-  /* Larger icon */
   padding: 5px;
   display: flex;
   align-items: center;
@@ -701,10 +629,8 @@ header .container {
 
 .modal-body {
   flex-grow: 1;
-  /* Allow body to take available space */
   overflow-y: auto;
   padding: 0;
-  /* Remove padding, handled by lesson-item */
 }
 
 .lesson-list {
@@ -719,11 +645,8 @@ header .container {
   transition: background-color 0.2s ease, border-left-color 0.2s ease;
   display: flex;
   align-items: baseline;
-  /* Align text baselines */
   border-left: 4px solid transparent;
-  /* Placeholder for active state */
   margin-left: -4px;
-  /* Compensate for border */
 }
 
 .lesson-item:last-child {
@@ -736,33 +659,26 @@ header .container {
 
 .lesson-item.active {
   background-color: rgba(255, 102, 0, 0.05);
-  /* More subtle highlight */
   border-left-color: var(--primary-color);
   font-weight: 600;
-  /* Highlight active text */
 }
 
 .lesson-number,
 .lesson-intro {
   color: var(--text-light);
-  /* Subdued color */
   font-weight: 600;
   margin-right: 8px;
   white-space: nowrap;
   font-size: 14px;
-  /* Slightly smaller */
 }
 
 .lesson-item.active .lesson-number,
 .lesson-item.active .lesson-intro {
   color: var(--primary-color);
-  /* Highlight prefix when active */
 }
-
 
 .lesson-intro {
   color: var(--secondary-color);
-  /* Differentiate intro */
 }
 
 .lesson-item.active .lesson-intro {
@@ -772,10 +688,8 @@ header .container {
 .lesson-title {
   flex: 1;
   color: var(--text-color);
-  /* Ensure text color */
 }
 
-/* Prevent body scrolling when modal is open */
 body.modal-open {
   overflow: hidden;
 }
@@ -783,23 +697,18 @@ body.modal-open {
 /* Content Styles */
 .content {
   padding: 40px 0 80px;
-  /* Add padding top/bottom */
   background-color: var(--bg-light);
-  /* Match language grid bg */
   min-height: 500px;
-  /* Ensure minimum height */
 }
 
 .content .container {
   position: relative;
 }
 
-/* Wrapper for content sections (placeholder, loading, error, lesson) */
 .lesson-content-wrapper {
   background-color: var(--bg-color);
   border-radius: var(--border-radius);
   padding: 30px 40px;
-  /* More horizontal padding */
   box-shadow: var(--shadow);
   border: 1px solid var(--border-color);
 }
@@ -810,7 +719,6 @@ body.modal-open {
 .coming-soon {
   text-align: center;
   padding: 60px 20px;
-  /* More padding */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -819,7 +727,6 @@ body.modal-open {
 
 .placeholder-icon {
   font-size: 50px;
-  /* Slightly smaller */
   color: var(--text-light);
   margin-bottom: 25px;
 }
@@ -838,7 +745,6 @@ body.modal-open {
   color: var(--text-light);
   max-width: 500px;
   margin: 0 auto 15px auto;
-  /* Add bottom margin to p */
   line-height: 1.7;
 }
 
@@ -851,7 +757,6 @@ body.modal-open {
   width: 40px;
   height: 40px;
   border: 4px solid var(--bg-dark);
-  /* Use bg-dark for track */
   border-left-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -865,15 +770,12 @@ body.modal-open {
 }
 
 /* Markdown Content Styling */
-/* Remove specific padding from wrapper, apply to lesson-content itself */
 .lesson-content {
   padding: 0;
-  /* Reset padding here */
 }
 
 .lesson-content h2 {
   font-size: 26px;
-  /* Slightly smaller */
   font-weight: 700;
   margin-top: 40px;
   margin-bottom: 20px;
@@ -884,14 +786,11 @@ body.modal-open {
 
 .lesson-content h2:first-child {
   margin-top: 0;
-  /* Remove top margin for first heading */
 }
 
 .lesson-content h3 {
   font-size: 21px;
-  /* Slightly smaller */
   font-weight: 700;
-  /* Bolder */
   margin-top: 35px;
   margin-bottom: 15px;
   color: var(--text-color);
@@ -903,32 +802,26 @@ body.modal-open {
   margin-top: 30px;
   margin-bottom: 12px;
   color: var(--text-light);
-  /* Subdue h4 */
 }
-
 
 .lesson-content p {
   margin-bottom: 20px;
   line-height: 1.7;
   color: var(--text-color);
-  /* Ensure base text color */
 }
 
 .lesson-content em {
-  /* color: var(--primary-color); Keep default emphasis or customize */
   font-style: italic;
 }
 
 .lesson-content strong {
   font-weight: 700;
-  /* color: var(--primary-color); Keep default strong or customize */
 }
 
 .lesson-content ul,
 .lesson-content ol {
   margin-bottom: 20px;
   padding-left: 30px;
-  /* Standard indent */
 }
 
 .lesson-content ul li,
@@ -939,12 +832,10 @@ body.modal-open {
 
 .lesson-content ul {
   list-style: disc;
-  /* Default */
 }
 
 .lesson-content ol {
   list-style: decimal;
-  /* Default */
 }
 
 .lesson-content blockquote {
@@ -954,26 +845,20 @@ body.modal-open {
   background-color: var(--bg-light);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   color: var(--text-light);
-  /* Quote text slightly lighter */
 }
 
 .lesson-content blockquote p {
   margin-bottom: 0;
   font-style: italic;
-  /* Italicize quote */
 }
 
 .lesson-content code {
   background-color: var(--bg-dark);
   padding: 3px 6px;
   border-radius: 4px;
-  /* Slightly rounder */
   font-family: 'Courier New', Courier, monospace;
-  /* Monospace font */
   color: var(--primary-dark);
-  /* Different color for inline code */
   font-size: 0.9em;
-  /* Slightly smaller */
 }
 
 .lesson-content pre {
@@ -982,7 +867,6 @@ body.modal-open {
   border-radius: var(--border-radius);
   overflow-x: auto;
   margin: 25px 0;
-  /* Consistent margin */
   border: 1px solid var(--border-color);
 }
 
@@ -990,22 +874,18 @@ body.modal-open {
   background-color: transparent;
   padding: 0;
   color: var(--text-color);
-  /* Use main text color in pre blocks */
   font-size: 0.9em;
   font-family: 'Courier New', Courier, monospace;
   border: none;
-  /* Remove border for code inside pre */
   border-radius: 0;
 }
 
 .table-container {
   overflow-x: auto;
   margin: 25px 0;
-  /* Consistent margin */
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   background-color: var(--bg-color);
-  /* Ensure bg for table */
 }
 
 .lesson-content table {
@@ -1015,12 +895,10 @@ body.modal-open {
 
 .lesson-content th {
   background-color: var(--bg-light);
-  /* Lighter header */
   padding: 12px 15px;
   text-align: left;
   border-bottom: 2px solid var(--border-color);
   font-weight: 700;
-  /* Bolder header */
   color: var(--text-color);
 }
 
@@ -1028,10 +906,8 @@ body.modal-open {
   padding: 12px 15px;
   border-bottom: 1px solid var(--border-color);
   vertical-align: top;
-  /* Align content top */
 }
 
-/* Use bg-light for striping to contrast better with bg-color */
 .dark-theme .lesson-content tr:nth-child(even),
 .lesson-content tr:nth-child(even) {
   background-color: var(--bg-light);
@@ -1044,22 +920,17 @@ body.modal-open {
 /* Custom Blocks */
 .thinking-point {
   background-color: rgba(76, 126, 249, 0.05);
-  /* More subtle background */
   border-left: 4px solid var(--secondary-color);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   padding: 20px;
   margin: 25px 0;
-  /* Consistent margin */
   border: 1px solid rgba(76, 126, 249, 0.2);
-  /* Add subtle border */
   border-left-width: 4px;
-  /* Ensure left border is thick */
 }
 
 .thinking-header {
   font-weight: 700;
   color: var(--secondary-dark);
-  /* Darker blue */
   margin-bottom: 15px;
   display: flex;
   align-items: center;
@@ -1068,33 +939,26 @@ body.modal-open {
 
 .thinking-header::before {
   content: '💡';
-  /* Keep icon */
   margin-right: 10px;
   font-size: 1.2em;
 }
 
 .thinking-point p:last-child {
   margin-bottom: 0;
-  /* Remove bottom margin on last paragraph */
 }
-
 
 .practice-answers {
   background-color: rgba(40, 167, 69, 0.05);
-  /* More subtle background */
   border-radius: var(--border-radius);
   padding: 20px;
   margin: 25px 0;
-  /* Consistent margin */
   border: 1px solid rgba(40, 167, 69, 0.2);
-  /* Subtle border */
 }
 
 .practice-answers h4 {
   font-size: 18px;
   font-weight: 700;
   margin-top: 0;
-  /* Remove top margin if it's the first element */
   margin-bottom: 15px;
   color: var(--success-color);
   display: flex;
@@ -1103,7 +967,6 @@ body.modal-open {
 
 .practice-answers h4::before {
   content: '\f058';
-  /* Font Awesome check circle */
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   margin-right: 10px;
@@ -1114,9 +977,7 @@ body.modal-open {
 .practice-answers ul:last-child,
 .practice-answers ol:last-child {
   margin-bottom: 0;
-  /* Remove bottom margin on last element */
 }
-
 
 /* Language specific / misc */
 .lesson-content .language-highlight {
@@ -1125,9 +986,7 @@ body.modal-open {
   padding: 2px 5px;
   font-weight: 600;
   color: var(--primary-dark);
-  /* Use darker primary */
   font-family: 'Courier New', Courier, monospace;
-  /* Maybe monospace? */
 }
 
 hr {
@@ -1136,13 +995,89 @@ hr {
   margin: 30px 0;
 }
 
+/* *** LESSON NAVIGATION BUTTON STYLES *** */
+.lesson-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.lesson-nav-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  flex-basis: calc(50% - 10px);
+  /* Width management: Aim for half width */
+  max-width: calc(50% - 10px);
+}
+
+.lesson-nav-btn:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lesson-nav-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--primary-light);
+}
+
+.lesson-nav-btn.prev {
+  justify-content: flex-start;
+}
+
+.lesson-nav-btn.next {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.lesson-nav-btn i {
+  color: white;
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+/* --- Content Visibility (Default = Mobile First) --- */
+.lesson-nav-label {
+  display: inline;
+  font-weight: 700;
+}
+
+/* Show Label */
+.lesson-nav-title {
+  display: none;
+  /* <<< Hide Title by default (on small screens) */
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* *** END LESSON NAVIGATION BUTTON STYLES (General) *** */
+
 /* Footer */
 footer {
   background-color: var(--bg-dark);
   padding: 25px 0;
-  /* More padding */
   margin-top: 60px;
-  /* More space before footer */
   border-top: 1px solid var(--border-color);
 }
 
@@ -1161,7 +1096,6 @@ footer {
   bottom: 30px;
   right: 30px;
   width: 45px;
-  /* Smaller */
   height: 45px;
   border-radius: 50%;
   background-color: var(--primary-color);
@@ -1186,32 +1120,22 @@ footer {
 .scroll-to-top:hover {
   background-color: var(--primary-dark);
   transform: translateY(-3px);
-  /* Lift slightly more */
 }
 
 /* Error message styling */
 .error-message {
-  /* text-align: center; */
-  /* Already centered via flex */
-  /* padding: 30px; */
-  /* Padding handled by wrapper */
   background-color: rgba(220, 53, 69, 0.05);
-  /* Lighter error bg */
   border: 1px solid rgba(220, 53, 69, 0.2);
   border-radius: var(--border-radius);
   color: var(--text-color);
-  /* Use normal text color */
 }
 
 .error-message h3 {
   color: var(--danger-color);
-  /* margin-bottom: 15px; */
-  /* Handled by wrapper */
 }
 
 .error-message p {
   color: var(--text-light);
-  /* Lighter text for message */
 }
 
 .error-details {
@@ -1224,28 +1148,23 @@ footer {
   text-align: left;
   color: var(--text-light);
   word-break: break-word;
-  /* Allow long errors to wrap */
 }
 
-/* Responsive Design */
+/* --- RESPONSIVE DESIGN --- */
 @media (max-width: 992px) {
   .hero .container {
     flex-direction: column;
     text-align: center;
-    /* Center text when stacked */
   }
 
   .hero-content {
     order: 2;
-    /* Text below image */
     text-align: center;
   }
 
   .hero-image {
     order: 1;
-    /* Image above text */
     height: 350px;
-    /* Adjust height */
     margin-bottom: 30px;
   }
 
@@ -1262,46 +1181,34 @@ footer {
 @media (max-width: 768px) {
   header .container {
     flex-wrap: wrap;
-    /* Allow wrapping */
     justify-content: space-between;
   }
 
   .logo {
     flex-basis: 60%;
-    /* Give logo more space */
   }
 
   .header-controls {
     flex-basis: 40%;
-    /* Controls take remaining space */
     justify-content: flex-end;
-    /* Align controls to right */
-    /* Removed column direction */
     gap: 10px;
   }
 
   .selected-language span {
     display: none;
-    /* Hide the language name text */
   }
 
   .selected-language {
     padding: 8px 10px;
-    /* Adjust padding for a smaller button */
-    /* Maybe make it slightly more square-ish if desired */
   }
 
   .selected-language .language-flag {
     margin-right: 0;
-    /* Remove margin since text is gone */
   }
 
   .selected-language i.fa-chevron-down {
     margin-left: 6px;
-    /* Slightly reduce space before the arrow */
   }
-
-
 
   .hero h2 {
     font-size: 32px;
@@ -1309,30 +1216,24 @@ footer {
 
   .hero-image {
     height: 300px;
-    /* Smaller */
     min-width: 0;
-    /* Allow shrinking */
   }
 
   .character {
     width: 50px;
     height: 50px;
-    /* Smaller characters */
   }
 
   .character i {
     font-size: 20px;
   }
 
-
   .lesson-content-wrapper {
     padding: 20px;
-    /* Less padding on mobile */
   }
 
   .language-grid {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    /* Adjust for smaller cards */
     gap: 20px;
   }
 
@@ -1352,20 +1253,16 @@ footer {
 
   .floating-lesson-header {
     top: 61px;
-    /* Adjust sticky top based on potentially smaller header */
   }
 
   .floating-lesson-header h2.centered-lesson-title {
     font-size: 18px;
-    /* Smaller title */
     padding: 0 45px;
-    /* Adjust padding */
   }
 
   .lesson-selector-toggle {
     width: 36px;
     height: 36px;
-    /* Smaller toggle */
   }
 
   .lesson-selector-toggle i {
@@ -1376,6 +1273,16 @@ footer {
     width: 95%;
     max-width: none;
     max-height: 90vh;
+  }
+}
+
+/* --- **Correction**: Show Title on Medium Screens and Up --- */
+@media (min-width: 768px) {
+
+  /* Use a more specific selector and 'inline-block' */
+  .lesson-navigation .lesson-nav-btn .lesson-nav-title {
+    display: inline-block;
+    /* <<< Show title on screens >= 768px */
   }
 }
 
@@ -1404,18 +1311,14 @@ footer {
 
   .cta-buttons {
     flex-direction: column;
-    /* Stack buttons */
     width: 100%;
     max-width: 300px;
-    /* Limit width */
     margin: 0 auto;
-    /* Center */
   }
 
   .primary-btn,
   .secondary-btn {
     width: 100%;
-    /* Full width in column */
     padding: 10px 20px;
     font-size: 15px;
   }
@@ -1423,8 +1326,6 @@ footer {
   .hero-image {
     height: 250px;
   }
-
-  /* Even smaller */
 
   .lesson-content-wrapper {
     padding: 15px;
@@ -1452,15 +1353,11 @@ footer {
 
   .language-grid {
     grid-template-columns: 1fr;
-    /* Single column */
   }
-
 
   .floating-lesson-header h2.centered-lesson-title {
     font-size: 16px;
-    /* Even smaller */
     padding: 0 40px;
-    /* Adjust padding */
   }
 
   .modal-header h3 {
@@ -1480,6 +1377,36 @@ footer {
   .lesson-intro {
     font-size: 13px;
   }
+
+  /* --- Responsive NAV BUTTONS (Small Screens <= 576px) --- */
+  /* Stacking and Width */
+  .lesson-navigation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lesson-nav-btn {
+    flex-basis: auto;
+    max-width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .lesson-nav-btn.next,
+  .lesson-nav-btn.prev {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .lesson-nav-btn.prev {
+    order: 1;
+  }
+
+  .lesson-nav-btn.next {
+    order: 2;
+  }
+
+  /* Title remains hidden due to default 'display: none' */
 
   .scroll-to-top {
     width: 40px;

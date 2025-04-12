@@ -65,9 +65,37 @@ const app = Vue.createApp({
   computed: {
     // Get the current lesson object based on selectedLessonId
     currentLesson() {
+      // Keep this existing computed property
       if (!this.selectedLessonId || !this.lessons || this.lessons.length === 0) return null;
       return this.lessons.find(lesson => lesson.id === this.selectedLessonId) || null;
+    },
+
+    // *** START: NEW COMPUTED PROPERTIES FOR NAVIGATION ***
+    // Find the index of the current lesson
+    currentLessonIndex() {
+      if (!this.selectedLessonId || !this.lessons || this.lessons.length === 0) {
+        return -1;
+      }
+      return this.lessons.findIndex(lesson => lesson.id === this.selectedLessonId);
+    },
+
+    // Get the previous lesson object
+    previousLesson() {
+      if (this.currentLessonIndex > 0) {
+        return this.lessons[this.currentLessonIndex - 1];
+      }
+      return null;
+    },
+
+    // Get the next lesson object
+    nextLesson() {
+      if (this.currentLessonIndex >= 0 && this.currentLessonIndex < this.lessons.length - 1) {
+        return this.lessons[this.currentLessonIndex + 1];
+      }
+      return null;
     }
+    // *** END: NEW COMPUTED PROPERTIES FOR NAVIGATION ***
+
   }, // End of computed
 
   // --- Lifecycle Hooks ---
@@ -236,7 +264,7 @@ const app = Vue.createApp({
         this.resetLessonState(false);
         setTimeout(() => {
           this.fetchLanguageContent(language.code);
-        }, 300);
+        }, 300); // Short delay for visual feedback
       } else {
         this.goToLanguageSelection();
       }
@@ -249,6 +277,7 @@ const app = Vue.createApp({
       this.comingSoon = false;
 
       try {
+        // IMPORTANT: Adjust this path if your files are located elsewhere
         const fileName = `./courses/${languageCode}-lesson.md`;
         const response = await fetch(fileName);
 
@@ -265,9 +294,8 @@ const app = Vue.createApp({
 
           if (this.lessons && this.lessons.length > 0) {
             this.currentView = 'lesson-selector';
-            this.selectedLessonId = this.lessons[0].id;
-            this.renderMarkdown(this.lessons[0].content);
-            this.$nextTick(() => this.scrollToContentTop());
+            this.selectedLessonId = this.lessons[0].id; // Select the first lesson
+            this.selectLesson(); // Render the first lesson (will also scroll)
           } else {
             console.warn(`No lessons found in file: ${fileName}`);
             this.renderComingSoon();
@@ -279,7 +307,7 @@ const app = Vue.createApp({
         this.errorTitle = 'Failed to Load Lessons';
         this.errorDetails = error.message;
         this.resetLessonState();
-        this.currentView = 'lesson-selector';
+        this.currentView = 'lesson-selector'; // Stay on lesson view to show error
       } finally {
         this.loading = false;
       }
@@ -288,35 +316,44 @@ const app = Vue.createApp({
     splitIntoLessons(markdown, languageCode) {
       const lessons = [];
       if (!markdown) return lessons;
+
+      // Split by H2 headings (##), keeping the heading with the content
       const sections = markdown.split(/(?=^##\s)/gm);
-      let introContent = '';
       let lessonIndex = 1;
+      let introContent = '';
 
       sections.forEach((section, index) => {
         section = section.trim();
         if (!section) return;
 
+        // If the first chunk doesn't start with ##, treat it as intro
         if (index === 0 && !section.startsWith('## ')) {
           introContent = section;
           if (introContent) {
+            // Try to extract H1 title if present, otherwise default
+            const introTitleMatch = introContent.match(/^#\s+(.*)/);
+            const introTitle = introTitleMatch ? introTitleMatch[1].trim() : 'Introduction';
             lessons.push({
               id: `${languageCode}-intro`,
-              title: (introContent.match(/^#\s+(.*)/)?.[1] || 'Introduction').trim(),
-              content: introContent
+              title: introTitle,
+              content: introContent // Keep the H1 in the content for rendering
             });
           }
-        } else if (section.startsWith('## ')) {
+        }
+        // Process sections starting with ## as lessons
+        else if (section.startsWith('## ')) {
           const lines = section.split('\n');
-          const title = lines[0].substring(3).trim();
-          const content = section;
+          const title = lines[0].substring(3).trim(); // Get text after '## '
+          const content = section; // Content includes the '## Title' line
           lessons.push({
             id: `${languageCode}-lesson-${lessonIndex}`,
             title: title,
             content: content
           });
           lessonIndex++;
-        } else if (index === 0 && section.startsWith('## ')) {
-          // Handle case where first section IS a lesson
+        }
+        // Handle edge case where the *very first* section IS a lesson (starts with ##)
+        else if (index === 0 && section.startsWith('## ')) {
           const lines = section.split('\n');
           const title = lines[0].substring(3).trim();
           const content = section;
@@ -331,20 +368,39 @@ const app = Vue.createApp({
       return lessons;
     },
 
-
+    // Method to load the selected lesson's content
     selectLesson() {
       if (this.selectedLessonId && this.lessons.length > 0) {
         const lesson = this.lessons.find(l => l.id === this.selectedLessonId);
         if (lesson) {
           this.renderMarkdown(lesson.content);
+          // Use $nextTick to ensure the DOM is updated before scrolling
           this.$nextTick(() => this.scrollToContentTop());
         } else {
           console.warn("Selected lesson ID not found:", this.selectedLessonId);
-          this.lessonContent = '<p>Error: Could not find the selected lesson.</p>';
+          this.lessonContent = '<p>Error: Could not find the selected lesson.</p>'; // Display error inline
+          this.errorMessage = ''; // Clear global error message
         }
       }
     },
 
+    // *** START: NEW NAVIGATION METHODS ***
+    goToPreviousLesson() {
+      if (this.previousLesson) {
+        this.selectedLessonId = this.previousLesson.id;
+        this.selectLesson(); // Re-use existing method to load content and scroll
+      }
+    },
+
+    goToNextLesson() {
+      if (this.nextLesson) {
+        this.selectedLessonId = this.nextLesson.id;
+        this.selectLesson(); // Re-use existing method to load content and scroll
+      }
+    },
+    // *** END: NEW NAVIGATION METHODS ***
+
+    // Render Markdown to HTML
     renderMarkdown(markdown) {
       if (typeof marked === 'undefined') {
         console.error("marked.js library is not loaded.");
@@ -354,54 +410,76 @@ const app = Vue.createApp({
         return;
       }
       if (!markdown) {
-        this.lessonContent = '';
+        this.lessonContent = ''; // Handle empty markdown case
         return;
       }
 
       try {
-        let processedMarkdown = markdown.replace(/^##\s+(?:Lesson\s+)?\d+:\s*/, '').trim();
+        // 1. Remove the main H1/H2 title from the content before rendering
+        //    (it's already displayed in the header/modal/buttons)
+        let processedMarkdown = markdown
+          .replace(/^#\s+.*/, '')   // Remove H1 if it was part of intro
+          .replace(/^##\s+.*/, '')  // Remove H2 if it was part of a lesson
+          .trim();
+
+        // 2. Parse the remaining Markdown
         let html = marked.parse(processedMarkdown);
 
-        // Post-processing HTML
+        // 3. Post-process HTML (Table Containers, Thinking Points, Practice Answers)
+        // Wrap tables
         html = html.replace(/<table([\s\S]*?)>/g, '<div class="table-container"><table$1>');
         html = html.replace(/<\/table>/g, '</table></div>');
 
+        // Transform Thinking Point blockquotes
         html = html.replace(
           /<blockquote>\s*<p>\s*<strong>Thinking Point:?(.*?)<\/strong>([\s\S]*?)<\/p>\s*<\/blockquote>/gi,
           (match, title, content) => {
             const trimmedTitle = title ? title.trim() : '';
-            let formattedContent = content.trim();
+            // Need to handle potential paragraphs within the blockquote content
+            let formattedContent = content.trim().replace(/<\/?p>/g, ''); // Basic removal of inner <p> tags
             return `<div class="thinking-point"><div class="thinking-header">Thinking Point${trimmedTitle ? ': ' + trimmedTitle : ''}</div><div>${formattedContent}</div></div>`;
           }
         );
 
+        // Transform Practice Answers sections
         const practiceStartMarker = '<p><em><strong>Practice Answers:</strong></em></p>';
-        let practiceEndMarker = '<hr>';
+        let practiceEndMarker = '<hr>'; // Assumes HR separates the answers section
         let startIndex = html.indexOf(practiceStartMarker);
+
         while (startIndex !== -1) {
-          const replacementStart = '<div class="practice-answers"><h4>Practice Answers:</h4>';
+          const replacementStart = '<div class="practice-answers"><h4>Practice Answers</h4>'; // Simple title
+          // Remove the original marker and insert the new div start
           html = html.substring(0, startIndex) + replacementStart + html.substring(startIndex + practiceStartMarker.length);
+
+          // Find the *next* <hr> tag after the inserted div start
           let endIndex = html.indexOf(practiceEndMarker, startIndex + replacementStart.length);
+
           if (endIndex !== -1) {
-            html = html.substring(0, endIndex) + '</div>' + html.substring(endIndex);
+            // Replace the <hr> with the closing div tag
+            html = html.substring(0, endIndex) + '</div>' + html.substring(endIndex + practiceEndMarker.length);
           } else {
+            // If no <hr> is found after the start marker, close the div at the end of the content
             html += '</div>';
             console.warn("Practice Answers section started but no subsequent <hr> found. Closed at end of content.");
-            break;
+            break; // Exit loop as we can't find more markers reliably
           }
-          startIndex = html.indexOf(practiceStartMarker, startIndex + replacementStart.length + '</div>'.length + practiceEndMarker.length);
+
+          // Look for the next start marker *after* the section we just processed
+          startIndex = html.indexOf(practiceStartMarker, startIndex + replacementStart.length); // Corrected search position
         }
 
+
+        // Set the final processed HTML
         this.lessonContent = html;
-        this.errorMessage = '';
-        this.comingSoon = false;
+        this.errorMessage = ''; // Clear any previous errors
+        this.comingSoon = false; // Ensure coming soon is false
 
       } catch (error) {
         console.error("Error rendering Markdown:", error);
         this.errorMessage = "Sorry, we couldn't display the lesson content correctly.";
         this.errorTitle = "Display Error";
         this.errorDetails = error.message;
-        this.lessonContent = null;
+        this.lessonContent = null; // Clear content on error
       }
     },
 
@@ -412,7 +490,7 @@ const app = Vue.createApp({
       this.lessons = [];
       this.selectedLessonId = '';
       this.errorMessage = '';
-      this.currentView = 'lesson-selector';
+      this.currentView = 'lesson-selector'; // Stay on view to show message
     },
 
     resetLessonState(resetLanguage = true) {
@@ -425,11 +503,14 @@ const app = Vue.createApp({
       this.errorMessage = '';
       this.errorDetails = '';
       this.comingSoon = false;
+      // Don't change currentView here automatically
     },
 
+    // Format lesson titles (remove "Lesson X:" prefix)
     formatLessonTitle(title) {
       if (!title) return '';
-      return title.replace(/^Lesson\s+\d+:\s*|^(\d+):\s*/i, '').trim();
+      // Remove prefixes like "Lesson 1:", "1:", "Introduction:", etc.
+      return title.replace(/^(Lesson\s+\d+:?|Intro(?:duction)?:?|\d+:?)\s*/i, '').trim();
     },
 
 
@@ -441,23 +522,35 @@ const app = Vue.createApp({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
+    // Scroll to the top of the lesson content area
+    // *** UPDATED scrollToContentTop ***
     scrollToContentTop() {
       // Use document.querySelector
       const contentArea = document.querySelector('.content');
       if (contentArea) {
-        const headerHeight = document.querySelector('header')?.offsetHeight || 0;
-        const floatingHeaderHeight = document.querySelector('.floating-lesson-header .container')?.offsetHeight || 0; // Target container for height
-        const floatingHeaderMarginTop = 20; // The margin-top we added in CSS
-        const offset = headerHeight + floatingHeaderHeight + floatingHeaderMarginTop + 20; // Add extra padding
+        const header = document.querySelector('header');
+        const floatingHeader = document.querySelector('.floating-lesson-header');
+        const headerHeight = header ? header.offsetHeight : 0;
+        // Get height of floating header ONLY if it's actually displayed
+        const floatingHeaderHeight = (floatingHeader && this.lessonContent && !this.loading && this.currentView === 'lesson-selector') ? floatingHeader.offsetHeight : 0;
+        const topPadding = 20; // Extra space above content
 
-        // Get the top position of the content area relative to the viewport
-        const contentTop = contentArea.getBoundingClientRect().top;
-        // Calculate the absolute position to scroll to
-        const absoluteScrollPosition = window.pageYOffset + contentTop - offset;
+        const offset = headerHeight + floatingHeaderHeight + topPadding;
+
+        // Get the top position of the content area WRAPPER (which contains the content)
+        const contentWrapper = document.querySelector('.lesson-content-wrapper');
+        // If wrapper exists, scroll to it, otherwise fallback to the main content area
+        const elementToScrollTo = contentWrapper || contentArea;
+
+        // Calculate the absolute top position of the element relative to the document
+        const elementTop = elementToScrollTo.getBoundingClientRect().top + window.pageYOffset;
+
+        // Calculate the final scroll position
+        const scrollToPosition = elementTop - offset;
 
 
         window.scrollTo({
-          top: absoluteScrollPosition,
+          top: scrollToPosition < 0 ? 0 : scrollToPosition, // Prevent scrolling above 0
           behavior: 'smooth'
         });
       }
