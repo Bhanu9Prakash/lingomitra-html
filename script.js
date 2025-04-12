@@ -15,6 +15,32 @@ if (typeof marked !== 'undefined') {
   console.error("Marked.js library not loaded!");
 }
 
+
+// --- Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Register the service worker. Path is relative to the origin.
+    // Since index.html is at /lingomitra-html/ and sw.js is also there,
+    // the path should just be 'service-worker.js' relative to the page,
+    // BUT registration path is relative to the origin.
+    // We need '/lingomitra-html/service-worker.js'
+    // Or let the browser figure it out if the script is loaded from the root scope defined in manifest.
+    // Let's explicitly state the path for clarity on GitHub Pages.
+    navigator.serviceWorker.register('/lingomitra-html/service-worker.js', { scope: '/lingomitra-html/' }) // Explicit path & scope
+      .then(registration => {
+        console.log('Service Worker registered successfully with scope:', registration.scope);
+      })
+      .catch(error => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+} else {
+  console.log('Service Worker is not supported by this browser.');
+}
+
+
+
+
 // --- Vue 3 Application Initialization ---
 const app = Vue.createApp({
   // --- Data Option (now a function) ---

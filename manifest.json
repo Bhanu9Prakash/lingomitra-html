@@ -1,0 +1,26 @@
+// manifest.json
+{
+  "name": "LingoMitra - Learn Languages",
+  "short_name": "LingoMitra",
+  "description": "Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, and Hindi.",
+  "start_url": "/lingomitra-html/", // Crucial: Matches your GitHub Pages base path
+  "display": "standalone", // Opens like a standalone app
+  "background_color": "#ffffff", // Matches your light theme background
+  "theme_color": "#ff6600",    // Matches your primary color
+  "scope": "/lingomitra-html/", // Crucial: Defines the PWA's navigation scope
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png", // Path relative to manifest.json
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable" // Important for Android adaptive icons
+    },
+    {
+      "src": "icons/icon-512x512.png", // Path relative to manifest.json
+      "sizes": "512x512",
+      "type": "image/png",
+       "purpose": "any maskable"
+    }
+    // Add more icon sizes if desired (e.g., 72x72, 96x96, 128x128, 144x144)
+  ]
+}
