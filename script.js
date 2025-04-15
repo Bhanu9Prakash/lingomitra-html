@@ -122,13 +122,24 @@ const app = Vue.createApp({
   created() {
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme');
+    // --- MODIFIED: Get the meta tag ---
+    const themeMetaTag = document.querySelector('meta[name="theme-color"]');
+
     if (savedTheme === 'dark') {
       this.darkTheme = true;
       document.body.classList.add('dark-theme');
+      // --- MODIFIED: Set initial dark theme color ---
+      if (themeMetaTag) {
+        themeMetaTag.setAttribute('content', '#1a1a1a');
+      }
     } else {
-      // Ensure light theme is default if no setting or invalid setting
       this.darkTheme = false;
       document.body.classList.remove('dark-theme');
+      // --- MODIFIED: Set initial light theme color ---
+      if (themeMetaTag) {
+        themeMetaTag.setAttribute('content', '#ffffff');
+      }
+      // Ensure light theme is default if no setting or invalid setting
       localStorage.setItem('theme', 'light');
     }
 
@@ -170,6 +181,15 @@ const app = Vue.createApp({
       this.darkTheme = !this.darkTheme;
       document.body.classList.toggle('dark-theme');
       localStorage.setItem('theme', this.darkTheme ? 'dark' : 'light');
+
+      // --- MODIFIED: Update meta tag ---
+      const themeMetaTag = document.querySelector('meta[name="theme-color"]');
+      if (themeMetaTag) {
+        // --- MODIFIED: Use background colors ---
+        const newThemeColor = this.darkTheme ? '#1a1a1a' : '#ffffff';
+        themeMetaTag.setAttribute('content', newThemeColor);
+      }
+      // --- End of modification ---
     },
 
     // --- Navigation ---
