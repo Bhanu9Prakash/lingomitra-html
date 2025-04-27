@@ -27,6 +27,7 @@ const urlsToCache = [
   `${GITHUB_BASE_PATH}/flags/hi.svg`,
   `${GITHUB_BASE_PATH}/flags/zh.svg`,
   `${GITHUB_BASE_PATH}/flags/jp.svg`,
+  `${GITHUB_BASE_PATH}/flags/kn.svg`,
   // Add offline.html if you implemented it
   // `${GITHUB_BASE_PATH}/offline.html`,
 ];
