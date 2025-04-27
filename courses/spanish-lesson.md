@@ -5283,5 +5283,3 @@ In this final lesson, we'll learn how to make plans, invite friends to activitie
 ---
 
 ¡Felicidades! You've completed our comprehensive Spanish course covering essential vocabulary, grammar, and conversational skills. Remember that language learning is a journey - keep practicing by speaking with native speakers, watching Spanish media, and using your new skills whenever possible. ¡Buena suerte con tu español!
-
----

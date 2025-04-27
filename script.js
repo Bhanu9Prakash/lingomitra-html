@@ -75,7 +75,8 @@ const app = Vue.createApp({
         { name: 'French', code: 'french', flagCode: 'fr', speakers: 280 },
         { name: 'Hindi', code: 'hindi', flagCode: 'hi', speakers: 615 },
         { name: 'Chinese', code: 'chinese', flagCode: 'zh', speakers: 1120 },
-        { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 }
+        { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 },
+        { name: 'Kannada', code: 'kannada', flagCode: 'kn', speakers: 44 }
         // Add more languages here
       ]
     }; // End of return object for data()

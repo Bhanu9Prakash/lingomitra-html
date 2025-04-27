@@ -4160,5 +4160,4 @@ Convert these direct speech sentences into indirect speech:
 
 Congratulations! You've completed the 25 foundational lessons of our French Language Course. You now have a solid foundation in French grammar, vocabulary, and essential phrases. Continue practicing regularly, immerse yourself in French media, and don't be afraid to make mistakes - they're a natural part of the learning process. Bonne continuation avec votre apprentissage du français ! (Good luck with your French learning!)
 
----
 
