@@ -24,6 +24,7 @@ https://lingomitra.com/
 - French
 - Hindi
 - Chinese
+- Kannada
 - Japanese
 
 ## Technologies Used
