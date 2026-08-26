@@ -19,6 +19,11 @@ German · Spanish · French · Hindi · Chinese · Japanese · Kannada
 - **Linkable lessons** — `#/german/12` is a real address; the back button works.
 - **Progress** — the lesson you were last on and the ones you've marked read are
   kept in `localStorage`; the home screen offers to resume.
+- **Practice** — build the lesson's sentences yourself instead of reading them.
+  Type or speak an answer, get a specific read on how it differs from the
+  course's, and hear the sentence spoken. 1,600+ exercises across the seven
+  courses, all authored — nothing is generated. Romanised answers count, so it
+  works on a phone with no Indic or CJK keyboard.
 - **Answer keys stay closed** until you ask for them, so practice exercises are
   worth attempting.
 - **Keyboard** — ← / → move between lessons, Esc closes any overlay.
@@ -36,6 +41,9 @@ self-hosted in `fonts/`.
 The interface is composed entirely from an approved set of design sources.
 **Before changing any UI, read [DESIGN.md](DESIGN.md)** — it records the palette,
 the type scale, and which source every component comes from.
+**Before changing anything that responds to a learner, read
+[PEDAGOGY.md](PEDAGOGY.md)** — it records what the Thinking Method is and the
+rules practice follows.
 
 ## Layout
 
@@ -44,10 +52,20 @@ index.html          page composition + icon sprite
 styles.css          design tokens and the component layer
 script.js           state, hash routing, storage
 js/content.js       markdown → lesson model (pure)
+js/practice.js      exercises → checkable items, and the checker (pure)
+js/speech.js        text-to-speech and voice input (Web Speech API)
 js/motion-fx.js     the animation layer (Motion)
 courses/*.md        lesson content
+tools/              extraction report and checker tests (Node)
 vendor/             Vue, marked, Motion
 fonts/              Inter Variable
+```
+
+## Checks
+
+```sh
+node tools/practice-report.js   # how many exercises extract, per course
+node tools/practice-test.js     # checker behaviour
 ```
 
 ## Running it

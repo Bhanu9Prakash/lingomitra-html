@@ -185,6 +185,29 @@
       <path d="m7 15 5 5 5-5" />
       <path d="m7 9 5-5 5 5" />
     </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M12 19v3" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <rect x="9" y="2" width="6" height="13" rx="3" />
+    </symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+    </symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M5 4l10 8-10 8V4z" />
+      <path d="M19 5v14" />
+    </symbol>
     <symbol id="i-spinner" viewBox="0 0 42 42">
       <g fill="none" transform="translate(3 3)" stroke-width="3" stroke="currentColor">
         <circle cx="18" cy="18" r="18" opacity="0.22" />
@@ -325,7 +348,7 @@
       </main>
 
       <!-- ── Lesson reader ───────────────────────────────────────────────── -->
-      <main v-else class="reader" :class="{ 'reader--solo': !lessons.length }">
+      <main v-else-if="view === 'lesson'" class="reader" :class="{ 'reader--solo': !lessons.length }">
         <!-- Watermelon UI · macos-sidebar -->
         <aside class="rail only-desktop" v-if="lessons.length">
           <div class="rail__head">
@@ -371,6 +394,18 @@
           </header>
 
           <article class="prose" ref="prose" v-html="html"></article>
+
+          <button class="practice-cta" v-if="practicePool" @click="startPractice('lesson')">
+            <svg><use href="#i-target" /></svg>
+            <span class="practice-cta__body">
+              <span class="practice-cta__title">{{ lessonItems.length ? 'Build these sentences yourself' :
+                'Practise what you have met so far' }}</span>
+              <span class="practice-cta__meta">{{ lessonItems.length
+                ? 'From this lesson, mixed with earlier ones — you produce first, the answer comes after'
+                : 'Recombining the ' + practicePool + ' sentences from earlier lessons' }}</span>
+            </span>
+            <svg class="practice-cta__go"><use href="#i-arrow-right" /></svg>
+          </button>
 
           <!-- Watermelon UI · step-pager -->
           <nav class="pager" aria-label="Lesson navigation" v-if="lessons.length > 1">
@@ -446,7 +481,131 @@
         </div>
       </main>
 
-      <footer class="footer">
+      <!-- ── Practice ────────────────────────────────────────────────────── -->
+      <main v-else-if="view === 'practice'" class="practice">
+        <h1 class="sr-only">Practice · {{ language.name }}</h1>
+        <div class="practice__head">
+          <p class="t-micro">Practice · {{ language.name }}</p>
+          <p class="t-micro practice__count t-num" v-if="!practiceDone">
+            {{ practiceIndex + 1 }} / {{ practiceSet.length }}
+          </p>
+          <button class="icon-btn" @click="exitPractice" aria-label="Leave practice">
+            <svg><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <div class="practice__meter" role="progressbar" :aria-valuenow="practiceIndex"
+          :aria-valuemax="practiceSet.length">
+          <i :style="{ width: practiceProgress + '%' }"></i>
+        </div>
+
+        <!-- One item -->
+        <div class="practice__body" v-if="!practiceDone && currentItem" aria-live="polite">
+          <p class="practice__instruction">
+            <svg width="14" height="14"><use href="#i-book" /></svg>
+            Lesson {{ currentItem.lessonNumber }}
+            <template v-if="currentItem.instruction">· <b>{{ currentItem.instruction }}</b></template>
+          </p>
+
+          <p class="practice__prompt">{{ currentItem.prompt }}</p>
+          <p class="practice__hint" v-if="currentItem.hint">{{ currentItem.hint }}</p>
+
+          <div class="answer-field" :data-state="verdict ? verdict.status : null">
+            <input ref="answerInput" type="text" v-model="attempt" :disabled="!!verdict" autocomplete="off"
+              autocorrect="off" autocapitalize="off" spellcheck="false" :lang="speechTag"
+              :placeholder="'Say it in ' + language.name + '…'" :aria-label="'Your answer in ' + language.name"
+              @keydown.enter.prevent="verdict ? nextItem() : checkAttempt()">
+            <button class="mic" v-if="canListen" :data-listening="listening ? 'true' : 'false'"
+              :disabled="!!verdict" @click="toggleListen"
+              :aria-label="listening ? 'Stop listening' : 'Answer by voice'">
+              <svg><use href="#i-mic" /></svg>
+            </button>
+          </div>
+
+          <div class="listening" v-if="listening" role="status">
+            <span class="wave" aria-hidden="true">
+              <i v-for="n in 12" :key="n" :style="{ animationDelay: (n * 0.07) + 's' }"></i>
+            </span>
+            <span class="listening__text">{{ heard || 'Listening…' }}</span>
+          </div>
+          <p class="practice__hint t-xs" v-if="listening && cloudSpeech">
+            Your browser handles speech recognition, which may send audio to its provider.
+          </p>
+
+          <div class="practice__actions" v-if="!verdict">
+            <button class="btn btn--primary" @click="checkAttempt" :disabled="!attempt.trim()">Check</button>
+            <button class="btn btn--ghost" @click="revealItem">Show the answer</button>
+          </div>
+
+          <!-- Verdict -->
+          <div class="verdict" v-if="verdict" :data-state="verdict.status" role="status">
+            <p class="verdict__line">
+              <svg><use :href="verdict.status === 'correct' ? '#i-check-circle' : '#i-target'" /></svg>
+              {{ verdictHeadline }}
+            </p>
+            <p class="verdict__note" v-if="verdictNote">{{ verdictNote }}</p>
+
+            <div class="compare">
+              <div class="compare__row" v-if="verdict.status !== 'correct' && attempt.trim()">
+                <span class="compare__who">You</span>
+                <span class="compare__text" v-html="attemptMarkup"></span>
+                <span></span>
+              </div>
+              <div class="compare__row compare__row--answer">
+                <span class="compare__who">Course</span>
+                <span class="compare__text">
+                  {{ currentItem.answer }}
+                  <small class="compare__roman" v-if="currentItem.roman">{{ currentItem.roman }}</small>
+                </span>
+                <button class="hear" v-if="voice.ok" :data-speaking="speakingNow ? 'true' : 'false'"
+                  @click="hear(currentItem.answer)" aria-label="Hear this sentence">
+                  <svg><use href="#i-speaker" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <p class="verdict__note" v-if="!voice.ok">{{ voiceNote }}</p>
+
+            <div class="practice__actions">
+              <button class="btn btn--primary" ref="nextBtn" @click="nextItem">
+                {{ practiceIndex + 1 < practiceSet.length ? 'Next' : 'Finish' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session summary -->
+        <div class="practice__body summary" v-else-if="practiceDone">
+          <h2 class="t-h1">Session done</h2>
+          <div class="summary__stats">
+            <span class="summary__stat">
+              <b class="t-num">{{ practiceResults.filter(r => r.status === 'correct').length }}</b>
+              <span class="t-sm t-subtle">matched the course</span>
+            </span>
+            <span class="summary__stat" v-if="practiceReview.length">
+              <b class="t-num">{{ practiceReview.length }}</b>
+              <span class="t-sm t-subtle">worth another look</span>
+            </span>
+          </div>
+
+          <div class="summary__list" v-if="practiceReview.length">
+            <p class="t-micro">Compare these again</p>
+            <div class="summary__item" v-for="r in practiceReview" :key="r.item.id">
+              <p>{{ r.item.answer }}</p>
+              <button class="hear" v-if="voice.ok" @click="hear(r.item.answer)" aria-label="Hear this sentence">
+                <svg><use href="#i-speaker" /></svg>
+              </button>
+              <small>{{ r.item.prompt }}</small>
+            </div>
+          </div>
+
+          <div class="practice__actions" style="margin-top:32px">
+            <button class="btn btn--primary" @click="startPractice(practiceScope)">Practise again</button>
+            <button class="btn btn--outline" @click="exitPractice">Back to the lesson</button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer" v-if="view !== 'practice'">
         <div class="shell footer__inner">
           <p>© {{ year }} LingoMitra</p>
           <p class="footer__hint">
@@ -571,6 +730,8 @@
   <script src="vendor/marked.umd.js"></script>
   <script src="vendor/motion.min.js"></script>
   <script src="js/motion-fx.js"></script>
+  <script src="js/practice.js"></script>
+  <script src="js/speech.js"></script>
   <script src="js/content.js"></script>
   <script src="script.js"></script>
 </body>

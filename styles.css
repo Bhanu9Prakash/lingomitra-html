@@ -1488,6 +1488,297 @@ a:hover { text-decoration: underline; }
 .sk-title { height: 30px; width: 62%; border-radius: var(--r-sm); margin-bottom: 30px; }
 .sk-block { height: 128px; border-radius: var(--r-md); }
 
+/* ── 17b. Practice ────────────────────────────────────────────────────────
+   A focused production surface: one prompt, one attempt, then the course's
+   answer. The answer is never on screen before the attempt — the same rule the
+   in-lesson answer key follows, and the reason Language Transfer asks you to
+   pause before it speaks. */
+
+.practice {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 28px var(--gutter) 120px;
+  min-height: calc(100vh - var(--topbar-h));
+  display: flex;
+  flex-direction: column;
+}
+
+.practice__head {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  background: var(--bg);
+}
+.practice__head .t-micro { white-space: nowrap; }
+.practice__count { margin-left: auto; }
+
+/* Watermelon UI · labeled-progress-indicator */
+.practice__meter {
+  position: sticky;
+  top: calc(var(--topbar-h) + 44px);
+  z-index: 20;
+  height: 2px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-bottom: 34px;
+}
+.practice__meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width var(--dur-slow) var(--ease);
+}
+
+.practice__body { flex: 1; }
+
+.practice__instruction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--fg-subtle);
+  font-size: 0.8125rem;
+}
+.practice__instruction b { font-weight: 500; color: var(--fg-muted); }
+
+.practice__prompt {
+  font-size: clamp(1.375rem, 1.1rem + 1.1vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -0.024em;
+  font-weight: 550;
+  text-wrap: balance;
+}
+.practice__hint {
+  margin-top: 10px;
+  color: var(--fg-subtle);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+/* Watermelon UI · input, with the voice control docked inside it */
+.answer-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  padding: 4px 4px 4px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.answer-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67, 59, 255, 0.24);
+}
+.answer-field[data-state='correct'] { border-color: var(--success-line); }
+.answer-field[data-state='close'] { border-color: var(--border-loud); }
+.answer-field input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  font-size: 1.0625rem;
+  outline: none;
+}
+.answer-field input::placeholder { color: var(--fg-faint); }
+.answer-field input:disabled { color: var(--fg-muted); }
+
+.practice__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.practice__actions .btn--ghost { margin-left: auto; }
+
+/* Verdict — Watermelon UI · alert. Three states, and only one of them is a
+   judgement: "close" and "different" show both lines and say nothing more,
+   because the course lists one answer and a learner may have produced another
+   good one. */
+.verdict { margin-top: 24px; }
+.verdict__line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  letter-spacing: -0.012em;
+}
+.verdict__line svg { width: 17px; height: 17px; flex-shrink: 0; }
+.verdict[data-state='correct'] .verdict__line { color: var(--success); }
+.verdict[data-state='close'] .verdict__line,
+.verdict[data-state='different'] .verdict__line { color: var(--fg-muted); }
+.verdict__note {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--fg-subtle);
+}
+
+.compare {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+.compare__row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+}
+.compare__row + .compare__row { border-top: 1px solid var(--border); }
+.compare__who { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint); }
+.compare__text { font-size: 1.0625rem; line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
+.compare__row--answer .compare__text { font-weight: 500; }
+.compare__text del { text-decoration: none; color: var(--fg-subtle); }
+.compare__text mark {
+  background: var(--accent-wash);
+  color: var(--accent-text);
+  border-radius: var(--r-xs);
+  padding: 0 3px;
+}
+.compare__roman {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--fg-subtle);
+  margin-top: 3px;
+}
+
+/* Hear it — Watermelon UI · audio-player transport control */
+.hear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg-muted);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.hear svg { width: 15px; height: 15px; }
+.hear:hover { background: var(--accent-wash); border-color: var(--accent-line); color: var(--accent-text); }
+.hear:active { transform: scale(0.94); }
+.hear[data-speaking='true'] { background: var(--accent-wash); border-color: var(--accent-line); color: var(--accent-text); }
+.hear:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Voice input — Kokonut UI · ai-voice */
+.mic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  color: var(--fg-subtle);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.mic svg { width: 18px; height: 18px; }
+.mic:hover { background: var(--surface-inset); color: var(--fg); }
+.mic[data-listening='true'] { background: var(--accent-wash); color: var(--accent-text); }
+.mic:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.listening {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: var(--accent-wash);
+  font-size: 0.8125rem;
+  color: var(--accent-text);
+}
+.wave { display: flex; align-items: center; gap: 2px; height: 16px; flex-shrink: 0; }
+.wave i {
+  width: 2px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  opacity: 0.7;
+  animation: wave 1.1s ease-in-out infinite;
+}
+@keyframes wave {
+  0%, 100% { height: 3px; }
+  50% { height: 15px; }
+}
+.listening__text { flex: 1; min-width: 0; color: var(--fg-muted); }
+
+/* Session summary. No score, no streak: Language Transfer is explicitly
+   against conditioning, and a tally would be exactly that. */
+.summary { padding-top: 8px; }
+.summary__stats {
+  display: flex;
+  gap: 26px;
+  margin: 22px 0 26px;
+}
+.summary__stat b {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.summary__list { margin-top: 26px; }
+.summary__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+}
+.summary__item p { font-size: 0.9375rem; }
+.summary__item small { grid-column: 1; color: var(--fg-subtle); font-size: 0.8125rem; }
+
+/* Entry point at the end of a lesson */
+.practice-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: var(--measure);
+  margin-top: 40px;
+  padding: 15px 16px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg);
+  background: var(--accent-wash);
+  text-align: left;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.practice-cta:hover { border-color: var(--accent); }
+.practice-cta > svg:first-child { width: 20px; height: 20px; color: var(--accent-text); flex-shrink: 0; }
+.practice-cta__body { flex: 1; min-width: 0; }
+.practice-cta__title { display: block; font-size: 0.9375rem; font-weight: 550; letter-spacing: -0.014em; }
+.practice-cta__meta { display: block; font-size: 0.8125rem; color: var(--fg-muted); }
+.practice-cta__go { flex-shrink: 0; width: 16px; height: 16px; color: var(--accent-text); transition: transform var(--dur-slow) var(--ease-out); }
+.practice-cta:hover .practice-cta__go { transform: translateX(3px); }
+
+@media (max-width: 860px) {
+  .practice { padding: 20px 16px calc(28px + env(safe-area-inset-bottom)); min-height: 0; }
+  .practice__meter { margin-bottom: 26px; }
+  .compare__row { grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; }
+  .summary__stats { gap: 20px; }
+}
+
 /* ── 18. Footer ──────────────────────────────────────────────────────────── */
 
 .footer {

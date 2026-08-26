@@ -41,6 +41,7 @@
   };
 
   var courseCache = Object.create(null);
+  var practiceCache = Object.create(null);
 
   function findLanguage(code) {
     for (var i = 0; i < LANGUAGES.length; i++) {
@@ -102,7 +103,23 @@
         activeSection: '',
         showTop: false,
 
-        progress: store.get(STORE_PROGRESS, {})
+        /* Practice */
+        practiceSet: [],
+        practiceIndex: 0,
+        practiceResults: [],
+        practiceScope: 'lesson',
+        practiceDone: false,
+        attempt: '',
+        verdict: null,
+        listening: false,
+        heard: '',
+        speakingNow: false,
+        voice: { ok: false, reason: 'unknown' },
+        canListen: false,
+        cloudSpeech: true,
+
+        progress: store.get(STORE_PROGRESS, {}),
+        itemsByLesson: {}
       };
     },
 
@@ -155,6 +172,79 @@
           title: best.title || 'Continue where you left off',
           number: best.number || 1
         };
+      },
+
+      /* ── Practice ────────────────────────────────────────────────────── */
+      lessonItems: function () {
+        return (this.itemsByLesson[this.lessonId] || []);
+      },
+      /* Practice is available on any lesson once earlier material exists —
+         recombining what you already met is the point, not a fallback. */
+      practicePool: function () {
+        var upTo = this.currentLesson ? this.currentLesson.number : 0;
+        var n = 0;
+        var byLesson = this.itemsByLesson;
+        Object.keys(byLesson).forEach(function (id) {
+          byLesson[id].forEach(function (item) { if (item.lessonNumber <= upTo) n++; });
+        });
+        return n;
+      },
+      currentItem: function () {
+        return this.practiceSet[this.practiceIndex] || null;
+      },
+      practiceProgress: function () {
+        if (!this.practiceSet.length) return 0;
+        var done = this.practiceDone ? this.practiceSet.length : this.practiceIndex;
+        return Math.round((done / this.practiceSet.length) * 100);
+      },
+      practiceReview: function () {
+        return this.practiceResults.filter(function (r) { return r.status !== 'correct'; });
+      },
+      speechTag: function () {
+        return this.language ? window.speech.tagFor(this.language.code) : 'en';
+      },
+      verdictHeadline: function () {
+        if (!this.verdict) return '';
+        return {
+          match: 'That\u2019s it.',
+          case: 'Right \u2014 mind the capitals.',
+          accents: 'Right \u2014 mind the accents.',
+          order: 'Same words, different order.',
+          near: 'One word apart.',
+          differs: 'The course puts it this way.',
+          revealed: 'The course puts it this way.'
+        }[this.verdict.result] || 'The course puts it this way.';
+      },
+      verdictNote: function () {
+        if (!this.verdict) return '';
+        if (this.verdict.via === 'roman') {
+          return 'Counted from the romanisation \u2014 typing the script is the next step, not a requirement.';
+        }
+        switch (this.verdict.result) {
+          case 'case':
+            return this.language && this.language.code === 'german'
+              ? 'In German capitals carry meaning: every noun takes one, and Sie (formal \u201cyou\u201d) is capitalised to separate it from sie (\u201cthey\u201d).'
+              : 'The words are right; only the capitals differ.';
+          case 'accents':
+            return 'The words are right; the marks above the letters differ.';
+          case 'order':
+            return 'You used exactly the right words. Compare the order \u2014 in some sentences both are fine.';
+          case 'near':
+            return 'Everything matches but one word. Compare them and work out why.';
+          case 'differs':
+            return 'This is the answer the course gives. If yours says the same thing another way, it may also be right.';
+          default:
+            return '';
+        }
+      },
+      attemptMarkup: function () {
+        if (!this.verdict || !this.currentItem) return '';
+        return this.diffMarkup(this.attempt, this.verdict.target || this.currentItem.answer);
+      },
+      voiceNote: function () {
+        if (this.voice.ok || !this.language) return '';
+        if (this.voice.reason === 'unsupported') return 'This browser cannot read sentences aloud.';
+        return 'This device has no ' + this.language.name + ' voice installed, so there is nothing to play.';
       },
 
       /* ── Command palette results ────────────────────────────────────── */
@@ -291,19 +381,40 @@
           return;
         }
 
+        var practising = parts[parts.length - 1] === 'practice';
+        if (practising) parts = parts.slice(0, -1);
+
         var wantId = parts[1]
           ? (parts[1] === 'intro' ? lang.code + '-intro' : lang.code + '-lesson-' + parts[1])
           : null;
 
         if (this.language && this.language.code === lang.code && this.lessons.length) {
           if (wantId && wantId !== this.lessonId) this.showLesson(wantId);
-          this.view = 'lesson';
+          this.view = practising ? 'practice' : 'lesson';
+          if (practising && !this.practiceSet.length) this.resumePracticeRoute();
+          if (!practising) this.stopListening();
           return;
         }
 
         this.language = lang;
-        this.view = 'lesson';
+        this.view = practising ? 'practice' : 'lesson';
+        this.pendingPractice = practising;
         this.loadCourse(lang, wantId);
+      },
+
+      /* A /practice URL opened cold (a share, a refresh, a back button) needs a
+         session built for it rather than an empty screen. */
+      resumePracticeRoute: function () {
+        if (!this.language || !this.lessons.length) return;
+        var upTo = this.currentLesson ? this.currentLesson.number : this.furthestLesson();
+        var set = window.practice.session(this.itemsByLesson, upTo, 8);
+        if (!set.length) { this.navigate(this.routeFor(this.language.code, this.lessonId), true); return; }
+        this.practiceSet = set;
+        this.practiceIndex = 0;
+        this.practiceResults = [];
+        this.practiceDone = false;
+        this.resetAttempt();
+        this.probeVoice();
       },
 
       routeFor: function (langCode, lessonId) {
@@ -321,6 +432,8 @@
       },
 
       goHome: function () {
+        this.stopListening();
+        window.speech.cancel();
         this.closeOverlays();
         this.navigate('#/');
         window.scrollTo({ top: 0, behavior: 'auto' });
@@ -338,6 +451,8 @@
       },
 
       goToLesson: function (id) {
+        this.stopListening();
+        window.speech.cancel();
         this.closeOverlays();
         this.navigate(this.routeFor(this.language.code, id));
       },
@@ -348,6 +463,14 @@
 
       /* ── Course loading ──────────────────────────────────────────────── */
       resetLesson: function () {
+        this.stopListening();
+        window.speech.cancel();
+        this.practiceSet = [];
+        this.practiceResults = [];
+        this.practiceIndex = 0;
+        this.practiceDone = false;
+        this.verdict = null;
+        this.attempt = '';
         this.lessons = [];
         this.lessonId = '';
         this.html = '';
@@ -364,7 +487,13 @@
 
         if (courseCache[lang.code]) {
           this.lessons = courseCache[lang.code];
+          this.itemsByLesson = this.buildItems(lang, this.lessons);
           this.showLesson(wantId || this.lessons[0].id);
+          if (this.pendingPractice) {
+            this.pendingPractice = false;
+            this.view = 'practice';
+            this.resumePracticeRoute();
+          }
           return;
         }
 
@@ -384,10 +513,16 @@
             if (!lessons.length) { self.comingSoon = true; self.loading = false; return; }
             courseCache[lang.code] = lessons;
             self.lessons = lessons;
+            self.itemsByLesson = self.buildItems(lang, lessons);
             /* Clear `loading` first: showLesson wires up the section observer and
                the table affordances, which need the article in the DOM. */
             self.loading = false;
             self.showLesson(wantId || lessons[0].id);
+            if (self.pendingPractice) {
+              self.pendingPractice = false;
+              self.view = 'practice';
+              self.resumePracticeRoute();
+            }
           })
           .catch(function (err) {
             self.error = true;
@@ -420,6 +555,7 @@
         }
 
         this.rememberPlace(lesson);
+        this.probeVoice();
         this.activeSection = this.sections.length ? this.sections[0].id : '';
         this.readProgress = 0;
 
@@ -435,6 +571,169 @@
           }
           self.onScroll();
         });
+      },
+
+      /* ── Practice ─────────────────────────────────────────────────────
+         Every prompt and answer here was written by the course author. Nothing
+         is generated, so nothing can be hallucinated. */
+      buildItems: function (lang, lessons) {
+        if (practiceCache[lang.code]) return practiceCache[lang.code];
+        var byLesson = {};
+        lessons.forEach(function (lesson) {
+          var got = window.practice.extract(lesson);
+          if (got.length) byLesson[lesson.id] = got;
+        });
+        practiceCache[lang.code] = byLesson;
+        return byLesson;
+      },
+
+      startPractice: function (scope) {
+        if (!this.language || !this.lessons.length) return;
+        this.practiceScope = scope || 'lesson';
+
+        var upTo = this.currentLesson ? this.currentLesson.number : this.furthestLesson();
+        var set = window.practice.session(this.itemsByLesson, upTo, 8);
+        if (!set.length) return;
+
+        this.practiceSet = set;
+        this.practiceIndex = 0;
+        this.practiceResults = [];
+        this.practiceDone = false;
+        this.resetAttempt();
+        this.probeVoice();
+
+        this.returnTo = location.hash;
+        this.navigate(this.routeFor(this.language.code, this.lessonId) + '/practice');
+      },
+
+      exitPractice: function () {
+        this.stopListening();
+        window.speech.cancel();
+        var back = this.returnTo || this.routeFor(this.language.code, this.lessonId);
+        this.returnTo = '';
+        this.navigate(back);
+      },
+
+      resetAttempt: function () {
+        this.attempt = '';
+        this.verdict = null;
+        this.heard = '';
+        var self = this;
+        this.$nextTick(function () {
+          if (self.$refs.answerInput) self.$refs.answerInput.focus();
+        });
+      },
+
+      checkAttempt: function () {
+        if (!this.currentItem || this.verdict) return;
+        if (!this.attempt.trim()) return;
+        this.stopListening();
+        this.verdict = window.practice.check(this.attempt, this.currentItem);
+        this.recordResult();
+      },
+
+      revealItem: function () {
+        if (!this.currentItem || this.verdict) return;
+        this.stopListening();
+        this.verdict = {
+          result: 'revealed',
+          status: 'different',
+          correct: false,
+          target: this.currentItem.answer,
+          via: 'answer'
+        };
+        this.recordResult();
+      },
+
+      recordResult: function () {
+        var self = this;
+        this.practiceResults.push({ item: this.currentItem, status: this.verdict.status });
+        this.$nextTick(function () {
+          if (self.$refs.nextBtn) self.$refs.nextBtn.focus();
+          /* Hearing the answer right after producing it is the point of the
+             exercise, so play it without being asked. */
+          if (self.voice.ok && self.currentItem) self.hear(self.currentItem.answer);
+        });
+      },
+
+      nextItem: function () {
+        window.speech.cancel();
+        if (this.practiceIndex + 1 >= this.practiceSet.length) {
+          this.practiceDone = true;
+          return;
+        }
+        this.practiceIndex++;
+        this.resetAttempt();
+      },
+
+      furthestLesson: function () {
+        var entry = this.language && this.progress[this.language.code];
+        return (entry && entry.number) || 1;
+      },
+
+      /* ── Speech ──────────────────────────────────────────────────────── */
+      probeVoice: function () {
+        var self = this;
+        this.canListen = window.speech.canListen();
+        this.cloudSpeech = window.speech.listenIsCloud();
+        if (!this.language) return;
+        window.speech.probeVoice(this.language.code, function (result) {
+          self.voice = result;
+        });
+      },
+
+      hear: function (text) {
+        var self = this;
+        if (!this.voice.ok || !text) return;
+        this.speakingNow = true;
+        window.speech.speak(text, this.language.code, {
+          onend: function () { self.speakingNow = false; },
+          onerror: function () { self.speakingNow = false; }
+        });
+      },
+
+      toggleListen: function () {
+        if (this.listening) { this.stopListening(); return; }
+        if (!this.canListen || !this.language) return;
+
+        var self = this;
+        window.speech.cancel();
+        this.heard = '';
+        this.listening = true;
+
+        this._stopListen = window.speech.listen(this.language.code, {
+          oninterim: function (text) { self.heard = text; },
+          onfinal: function (text) {
+            self.attempt = text;
+            self.heard = text;
+          },
+          onend: function (gotResult) {
+            self.listening = false;
+            self._stopListen = null;
+            if (gotResult) self.$nextTick(function () { self.checkAttempt(); });
+          },
+          onerror: function () { self.listening = false; }
+        });
+      },
+
+      stopListening: function () {
+        if (this._stopListen) { this._stopListen(); this._stopListen = null; }
+        this.listening = false;
+      },
+
+      /* Word-level diff, used only to point at what differs. It never rewrites
+         the learner's sentence. */
+      diffMarkup: function (attempt, target) {
+        var norm = window.practice.normalise;
+        var a = norm(attempt).split(' ').filter(Boolean);
+        var t = norm(target).split(' ').filter(Boolean);
+        var pool = t.map(function (w) { return w.toLowerCase(); });
+
+        return a.map(function (word) {
+          var i = pool.indexOf(word.toLowerCase());
+          if (i >= 0) { pool.splice(i, 1); return escapeHtml(word); }
+          return '<mark>' + escapeHtml(word) + '</mark>';
+        }).join(' ');
       },
 
       /* ── Progress ────────────────────────────────────────────────────── */
@@ -632,9 +931,14 @@
           if (this.sheetOpen) { this.sheetOpen = false; return; }
           if (this.islandOpen) { this.toggleIsland(); return; }
           if (this.langMenuOpen) { this.langMenuOpen = false; return; }
+          if (this.listening) { this.stopListening(); return; }
+          if (this.view === 'practice') { e.preventDefault(); this.exitPractice(); return; }
         }
 
         if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+
+        /* In practice, the arrow keys belong to the text field, not the course. */
+        if (this.view === 'practice') return;
 
         if (this.view === 'lesson' && !this.paletteOpen) {
           if (e.key === 'ArrowLeft' && this.prevLesson) {

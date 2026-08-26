@@ -68,6 +68,9 @@ correctly offline.
 | `.thinking-point` (💡 blockquote) | `.thinking` callout, now applied to **every** labelled blockquote, not just "Thinking Point" | Watermelon UI · `alert` |
 | `.practice-answers` (always visible) | `.answers` — a disclosure, **collapsed by default** | Motion Primitives · `disclosure` |
 | (nothing) no reading progress | `.scroll-progress` bar + the island's progress ring | Motion Primitives · `scroll-progress` |
+| (nothing) exercises were read, not done | `.practice` — elicit, attempt, check, hear | Watermelon UI · `input`, `labeled-progress-indicator`, `alert`, `audio-player` transport |
+| (nothing) no voice input | `.mic` + `.listening` waveform | Kokonut UI · `ai-voice` |
+| (nothing) no answer feedback | `.verdict` + `.compare` | Watermelon UI · `alert`, `inline-toast` |
 | `.hero-image` floating Font Awesome circles | `.backdrop` blurry-gradient SVG | Haikei · blurry gradient |
 | `.hero h2` static headline | `.text-effect` word-by-word reveal | Motion Primitives · `text-effect` (`fade-in-blur`) |
 | Font Awesome CDN (~75 KB for 10 icons) | inline SVG sprite in `index.html` | Lucide geometry, as used by every approved source |
@@ -103,8 +106,28 @@ replaced again without touching parsing or state:
 - `js/motion-fx.js` — the animation layer.
 - `script.js` — state, hash routing, storage, wiring.
 
-## Note on AI and voice
+## Practice
 
-This product has no AI, chat, voice or microphone surface, so the AI/chat part
-of the redesign brief does not apply. No such interface was invented, because
-adding non-functional chat UI would be worse than having none.
+`js/practice.js` turns the exercises already written into the courses into
+checkable items and checks an attempt against them. It is pure — no DOM, no app
+state, no network — and runs under Node so extraction is measured against the
+real course files rather than assumed:
+
+```sh
+node tools/practice-report.js    # extraction coverage per course
+node tools/practice-test.js      # checker behaviour
+```
+
+`js/speech.js` wraps the browser's own Web Speech API for reading a sentence
+aloud and for answering by voice. No model, no download.
+
+**The rules this feature follows, and why, are in [PEDAGOGY.md](PEDAGOGY.md).**
+Read it before adding anything that responds to a learner — in particular before
+adding the on-device model layer, which has a brief there.
+
+## Note on AI
+
+There is no chat surface and nothing is generated: every practice prompt and
+answer was written by the course author. An on-device model layer is planned as
+an opt-in enhancement on top of what exists, never as a dependency; PEDAGOGY.md
+sets out what it may and may not do.

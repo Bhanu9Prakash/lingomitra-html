@@ -3,7 +3,7 @@
    Course markdown is served stale-while-revalidate so a lesson you have read
    once opens instantly and offline, but still updates in the background. */
 
-const CACHE = 'lingomitra-v3';
+const CACHE = 'lingomitra-v4';
 
 const SHELL = [
   '/',
@@ -12,6 +12,8 @@ const SHELL = [
   '/script.js',
   '/js/motion-fx.js',
   '/js/content.js',
+  '/js/practice.js',
+  '/js/speech.js',
   '/vendor/vue.global.prod.js',
   '/vendor/marked.umd.js',
   '/vendor/motion.min.js',
