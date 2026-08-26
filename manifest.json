@@ -1,25 +1,37 @@
-// manifest.json
 {
-  "name": "LingoMitra - Learn Languages",
+  "name": "LingoMitra — Learn languages by pattern",
   "short_name": "LingoMitra",
-  "description":  "Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, and Hindi.",
-  "start_url": "/", // CORRECTED - Root path
+  "description": "Seven languages taught through the patterns behind them. Free, offline-capable, no account.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
-  "scope": "/", // CORRECTED - Root scope
+  "background_color": "#050315",
+  "theme_color": "#050315",
+  "categories": ["education"],
   "icons": [
     {
-      "src": "/icons/icon-192x192.png", // CORRECTED - Path from root
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512.png", // CORRECTED - Path from root
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-       "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
