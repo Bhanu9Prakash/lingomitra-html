@@ -17,7 +17,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
   <meta property="og:title" content="LingoMitra — Learn languages by pattern">
@@ -207,6 +208,12 @@
       stroke-linejoin="round">
       <path d="M5 4l10 8-10 8V4z" />
       <path d="M19 5v14" />
+    </symbol>
+    <symbol id="i-cloud-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="m2 2 20 20" />
+      <path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" />
+      <path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />
     </symbol>
     <symbol id="i-spinner" viewBox="0 0 42 42">
       <g fill="none" transform="translate(3 3)" stroke-width="3" stroke="currentColor">
@@ -454,19 +461,21 @@
         <!-- Error / coming soon — Watermelon UI · alert composition -->
         <div class="reader__main" v-else>
           <div class="state" v-if="error">
-            <div class="state__icon" style="color:var(--danger);border-color:var(--danger-line)">
-              <svg><use href="#i-alert" /></svg>
+            <div class="state__icon"
+              :style="offlineMiss ? null : 'color:var(--danger);border-color:var(--danger-line)'">
+              <svg><use :href="offlineMiss ? '#i-cloud-off' : '#i-alert'" /></svg>
             </div>
-            <h1 class="t-h1 state__title">That course didn’t load</h1>
-            <p class="state__body">The lesson file couldn’t be fetched. Check your connection and try again — nothing
-              you’ve read has been lost.</p>
-            <p class="state__detail" v-if="errorDetail">{{ errorDetail }}</p>
+            <h1 class="t-h1 state__title">{{ errorTitle }}</h1>
+            <p class="state__body">{{ errorBody }}</p>
+            <p class="state__detail" v-if="errorDetail && !offlineMiss">{{ errorDetail }}</p>
             <div class="state__actions">
-              <button class="btn btn--primary" @click="retry">
+              <button class="btn btn--primary" @click="retry" v-if="!offlineMiss">
                 <svg><use href="#i-retry" /></svg>
                 Try again
               </button>
-              <button class="btn btn--ghost" @click="goHome">Pick another language</button>
+              <button class="btn" :class="offlineMiss ? 'btn--primary' : 'btn--ghost'" @click="goHome">
+                {{ offlineMiss ? 'See what is available' : 'Pick another language' }}
+              </button>
             </div>
           </div>
 

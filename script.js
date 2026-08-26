@@ -102,6 +102,7 @@
         readProgress: 0,
         activeSection: '',
         showTop: false,
+        online: navigator.onLine !== false,
 
         /* Practice */
         practiceSet: [],
@@ -241,6 +242,20 @@
         if (!this.verdict || !this.currentItem) return '';
         return this.diffMarkup(this.attempt, this.verdict.target || this.currentItem.answer);
       },
+      /* Offline and this course was never opened is a different problem from a
+         failed request, and it has a different answer. */
+      offlineMiss: function () {
+        return this.error && !this.online;
+      },
+      errorTitle: function () {
+        return this.offlineMiss ? 'Not downloaded yet' : 'That course didn\u2019t load';
+      },
+      errorBody: function () {
+        return this.offlineMiss
+          ? 'You are offline, and this course has not been opened on this device before. Any course you have already read stays available.'
+          : 'The lesson file could not be fetched. Check your connection and try again \u2014 nothing you have read has been lost.';
+      },
+
       voiceNote: function () {
         if (this.voice.ok || !this.language) return '';
         if (this.voice.reason === 'unsupported') return 'This browser cannot read sentences aloud.';
@@ -333,6 +348,8 @@
     created: function () {
       window.addEventListener('scroll', this.onScroll, { passive: true });
       window.addEventListener('resize', this.onResize, { passive: true });
+      window.addEventListener('online', this.onConnectivity);
+      window.addEventListener('offline', this.onConnectivity);
       window.addEventListener('hashchange', this.readRoute);
       window.addEventListener('keydown', this.onKey, true);
       document.addEventListener('click', this.onDocClick);
@@ -348,6 +365,8 @@
     beforeUnmount: function () {
       window.removeEventListener('scroll', this.onScroll);
       window.removeEventListener('resize', this.onResize);
+      window.removeEventListener('online', this.onConnectivity);
+      window.removeEventListener('offline', this.onConnectivity);
       window.removeEventListener('hashchange', this.readRoute);
       window.removeEventListener('keydown', this.onKey, true);
       document.removeEventListener('click', this.onDocClick);
@@ -791,6 +810,13 @@
 
       onResize: function () {
         this.markScrollableTables();
+      },
+
+      onConnectivity: function () {
+        this.online = navigator.onLine !== false;
+        /* Coming back online, a course that failed for that reason is worth
+           another go without making the reader ask for it. */
+        if (this.online && this.error && this.language) this.retry();
       },
 
       observeSections: function () {

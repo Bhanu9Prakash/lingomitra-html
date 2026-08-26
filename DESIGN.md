@@ -95,6 +95,31 @@ component it implements and the spring constants come from that component:
 Everything is disabled under `prefers-reduced-motion: reduce`, in both CSS and
 `fx.reduced()`.
 
+## Mobile and PWA
+
+The app is installable and works offline. Things worth not breaking:
+
+- **Safe areas.** `viewport-fit=cover` plus a translucent iOS status bar means
+  the web view runs *under* the notch, so the topbar pays the inset back with
+  `padding-top: env(safe-area-inset-top)` and its height grows to match.
+  The island, sheet and practice screen do the same at the bottom for the home
+  indicator. Verified by emulating a 59px/34px inset through CDP.
+- **`100dvh`, not `100vh`.** On phones the address bar makes `100vh` taller than
+  what you can see. Every full-height shell sets `100vh` first as a fallback and
+  `100dvh` after it.
+- **16px minimum on inputs.** iOS zooms the whole page when a focused input is
+  smaller, which is why `.cmd__input` is `1rem` and not `0.9375rem`.
+- **44px touch targets.** Under `@media (hover: none) and (pointer: coarse)` the
+  hit boxes grow while the painted controls stay the same size. The heading
+  anchor link is hover-only, so it is hidden on touch rather than left as an
+  11px target.
+- **Icons.** A full-bleed icon must never be declared `maskable` — Android crops
+  to a circle and clips it. `icon-*.png` are `any`; `icon-maskable-*.png` put the
+  same mark at 74% on the brand gradient, inside the safe zone.
+- **Screenshots** in the manifest are what make Chrome on Android show its
+  richer install dialog, so they are part of setup, not marketing. Regenerate
+  them after visible UI changes with `node tools/make-screenshots.js`.
+
 ## Architecture
 
 Presentation, content and behaviour are separate so the visual layer can be

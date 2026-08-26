@@ -3,7 +3,7 @@
    Course markdown is served stale-while-revalidate so a lesson you have read
    once opens instantly and offline, but still updates in the background. */
 
-const CACHE = 'lingomitra-v4';
+const CACHE = 'lingomitra-v5';
 
 const SHELL = [
   '/',
@@ -24,6 +24,7 @@ const SHELL = [
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/icons/apple-touch-icon.png',
   '/flags/de.svg',
   '/flags/es.svg',
   '/flags/fr.svg',

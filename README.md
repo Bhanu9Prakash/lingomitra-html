@@ -30,7 +30,10 @@ German · Spanish · French · Hindi · Chinese · Japanese · Kannada
 - **Themes** — dark by default, light on request, system preference respected on
   first visit.
 - **Offline** — the app shell and every course you've opened are cached by the
-  service worker.
+  service worker. Open a course once and it stays readable with no connection;
+  one you have never opened says so plainly rather than failing.
+- **Installable** — a real PWA: maskable icons, install screenshots, safe-area
+  handling for notched phones, and 44px touch targets throughout.
 
 ## Built with
 
@@ -56,7 +59,8 @@ js/practice.js      exercises → checkable items, and the checker (pure)
 js/speech.js        text-to-speech and voice input (Web Speech API)
 js/motion-fx.js     the animation layer (Motion)
 courses/*.md        lesson content
-tools/              extraction report and checker tests (Node)
+icons/ screenshots/ PWA assets (see tools/)
+tools/              checks, and the PWA asset generators
 vendor/             Vue, marked, Motion
 fonts/              Inter Variable
 ```
@@ -67,6 +71,16 @@ fonts/              Inter Variable
 node tools/practice-report.js   # how many exercises extract, per course
 node tools/practice-test.js     # checker behaviour
 ```
+
+Regenerating PWA assets (needs `playwright` and its bundled Chromium):
+
+```sh
+node tools/make-icons.js        # maskable + apple-touch icons, from the app mark
+node tools/make-screenshots.js  # manifest install screenshots
+```
+
+Run `make-screenshots.js` after any visible UI change, since the install
+prompt shows them.
 
 ## Running it
 
