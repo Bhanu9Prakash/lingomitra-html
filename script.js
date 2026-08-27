@@ -1,603 +1,1013 @@
-// Initialize marked.js renderer and options globally
-if (typeof marked !== 'undefined') {
-  marked.setOptions({
-    renderer: new marked.Renderer(),
-    highlight: null, // No syntax highlighting by default
-    pedantic: false,
-    gfm: true,    // Use GitHub Flavored Markdown
-    breaks: true,   // Convert single line breaks to <br>
-    sanitize: false, // IMPORTANT: Only use false if Markdown source is trusted
-    smartLists: true,
-    smartypants: false,
-    xhtml: false
-  });
-} else {
-  console.error("Marked.js library not loaded!");
-}
+/* =============================================================================
+   LingoMitra — application logic.
+   Presentation lives in styles.css + index.html; markdown handling lives in
+   js/content.js; every animation goes through js/motion-fx.js. This file only
+   holds state, routing, storage and the wiring between them.
+   ========================================================================== */
 
+(function () {
+  'use strict';
 
-// --- Service Worker Registration ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Register service worker from the root, scope is the whole origin
-    navigator.serviceWorker.register('/service-worker.js', { scope: '/' }) // CORRECTED PATH & SCOPE
-      .then(registration => {
-        console.log('Service Worker registered successfully with scope:', registration.scope);
-      })
-      .catch(error => {
-        console.error('Service Worker registration failed:', error); // This will now hopefully succeed
-      });
-  });
-} else {
-  console.log('Service Worker is not supported by this browser.');
-}
+  var LANGUAGES = [
+    { name: 'German', code: 'german', flagCode: 'de', speakers: 132 },
+    { name: 'Spanish', code: 'spanish', flagCode: 'es', speakers: 534 },
+    { name: 'French', code: 'french', flagCode: 'fr', speakers: 280 },
+    { name: 'Hindi', code: 'hindi', flagCode: 'hi', speakers: 615 },
+    { name: 'Chinese', code: 'chinese', flagCode: 'zh', speakers: 1120 },
+    { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 },
+    { name: 'Kannada', code: 'kannada', flagCode: 'kn', speakers: 56 }
+  ];
 
+  var STORE_THEME = 'lm.theme';
+  var STORE_PROGRESS = 'lm.progress';
 
+  /* localStorage can throw in private modes — never let that break the app. */
+  var store = {
+    get: function (key, fallback) {
+      try {
+        var raw = localStorage.getItem(key);
+        return raw == null ? fallback : JSON.parse(raw);
+      } catch (e) { return fallback; }
+    },
+    set: function (key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* ignore */ }
+    },
+    raw: function (key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    },
+    setRaw: function (key, value) {
+      try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
+    }
+  };
 
+  var courseCache = Object.create(null);
+  var practiceCache = Object.create(null);
 
-// --- Vue 3 Application Initialization ---
-const app = Vue.createApp({
-  // --- Data Option (now a function) ---
-  data() {
-    return {
-      // App state
-      currentView: 'hero', // 'hero', 'language-grid', 'lesson-selector'
-      loading: false,
-      darkTheme: false,
-      showHeaderLanguageDropdown: false,
-      showLessonModal: false,
-      showScrollTop: false,
+  function findLanguage(code) {
+    for (var i = 0; i < LANGUAGES.length; i++) {
+      if (LANGUAGES[i].code === code) return LANGUAGES[i];
+    }
+    return null;
+  }
 
-      // Content
-      selectedLanguage: null, // { name, code, flagCode, speakers }
-      selectedLessonId: '',   // e.g., 'german-lesson-1'
-      lessonContent: null,    // HTML content of the current lesson
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
-      // Error handling
-      errorMessage: '',
-      errorTitle: 'Oops! Something went wrong.',
-      errorDetails: '',
+  /* Highlight the matched run in a palette result. */
+  function mark(text, query) {
+    var safe = escapeHtml(text);
+    if (!query) return safe;
+    var i = text.toLowerCase().indexOf(query.toLowerCase());
+    if (i < 0) return safe;
+    return escapeHtml(text.slice(0, i)) +
+      '<mark>' + escapeHtml(text.slice(i, i + query.length)) + '</mark>' +
+      escapeHtml(text.slice(i + query.length));
+  }
 
-      // Placeholder content
-      placeholderIcon: 'fas fa-book-open',
-      placeholderTitle: 'Welcome to LingoMitra!',
-      placeholderText: 'Your journey to mastering new languages begins here. Select a language to get started.',
+  window.content.configureMarked();
 
-      // Data
-      lessons: [], // Array of { id, title, content }
-      comingSoon: false,
-      currentYear: new Date().getFullYear(),
+  var app = Vue.createApp({
+    data: function () {
+      return {
+        languages: LANGUAGES,
+        view: 'home',
 
-      // Available languages
-      languages: [
-        { name: 'German', code: 'german', flagCode: 'de', speakers: 132 },
-        { name: 'Spanish', code: 'spanish', flagCode: 'es', speakers: 534 },
-        { name: 'French', code: 'french', flagCode: 'fr', speakers: 280 },
-        { name: 'Hindi', code: 'hindi', flagCode: 'hi', speakers: 615 },
-        { name: 'Chinese', code: 'chinese', flagCode: 'zh', speakers: 1120 },
-        { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 },
-        { name: 'Kannada', code: 'kannada', flagCode: 'kn', speakers: 56 }
-        // Add more languages here
-      ]
-    }; // End of return object for data()
-  }, // End of data() function
+        dark: document.documentElement.classList.contains('theme-dark'),
+        year: new Date().getFullYear(),
+        metaKeyLabel: /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl ',
 
-  // --- Computed Properties ---
-  computed: {
-    // Get the current lesson object based on selectedLessonId
-    currentLesson() {
-      // Keep this existing computed property
-      if (!this.selectedLessonId || !this.lessons || this.lessons.length === 0) return null;
-      return this.lessons.find(lesson => lesson.id === this.selectedLessonId) || null;
+        language: null,
+        pendingName: '',
+        lessons: [],
+        lessonId: '',
+        html: '',
+        sections: [],
+        readingMinutes: 1,
+
+        loading: false,
+        error: false,
+        errorDetail: '',
+        comingSoon: false,
+
+        langMenuOpen: false,
+        sheetOpen: false,
+        islandOpen: false,
+        paletteOpen: false,
+        query: '',
+        paletteIndex: 0,
+
+        readProgress: 0,
+        activeSection: '',
+        showTop: false,
+        online: navigator.onLine !== false,
+
+        /* Practice */
+        practiceSet: [],
+        practiceIndex: 0,
+        practiceResults: [],
+        practiceScope: 'lesson',
+        practiceDone: false,
+        attempt: '',
+        verdict: null,
+        listening: false,
+        heard: '',
+        speakingNow: false,
+        voice: { ok: false, reason: 'unknown' },
+        canListen: false,
+        cloudSpeech: true,
+
+        progress: store.get(STORE_PROGRESS, {}),
+        itemsByLesson: {}
+      };
     },
 
-    // *** START: NEW COMPUTED PROPERTIES FOR NAVIGATION ***
-    // Find the index of the current lesson
-    currentLessonIndex() {
-      if (!this.selectedLessonId || !this.lessons || this.lessons.length === 0) {
+    computed: {
+      currentLesson: function () {
+        for (var i = 0; i < this.lessons.length; i++) {
+          if (this.lessons[i].id === this.lessonId) return this.lessons[i];
+        }
+        return null;
+      },
+      lessonIndex: function () {
+        for (var i = 0; i < this.lessons.length; i++) {
+          if (this.lessons[i].id === this.lessonId) return i;
+        }
         return -1;
-      }
-      return this.lessons.findIndex(lesson => lesson.id === this.selectedLessonId);
-    },
-
-    // Get the previous lesson object
-    previousLesson() {
-      if (this.currentLessonIndex > 0) {
-        return this.lessons[this.currentLessonIndex - 1];
-      }
-      return null;
-    },
-
-    // Get the next lesson object
-    nextLesson() {
-      if (this.currentLessonIndex >= 0 && this.currentLessonIndex < this.lessons.length - 1) {
-        return this.lessons[this.currentLessonIndex + 1];
-      }
-      return null;
-    }
-    // *** END: NEW COMPUTED PROPERTIES FOR NAVIGATION ***
-
-  }, // End of computed
-
-  // --- Lifecycle Hooks ---
-  created() {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    // --- MODIFIED: Get the meta tag ---
-    const themeMetaTag = document.querySelector('meta[name="theme-color"]');
-
-    if (savedTheme === 'dark') {
-      this.darkTheme = true;
-      document.body.classList.add('dark-theme');
-      // --- MODIFIED: Set initial dark theme color ---
-      if (themeMetaTag) {
-        themeMetaTag.setAttribute('content', '#1a1a1a');
-      }
-    } else {
-      this.darkTheme = false;
-      document.body.classList.remove('dark-theme');
-      // --- MODIFIED: Set initial light theme color ---
-      if (themeMetaTag) {
-        themeMetaTag.setAttribute('content', '#ffffff');
-      }
-      // Ensure light theme is default if no setting or invalid setting
-      localStorage.setItem('theme', 'light');
-    }
-
-    // Check if user has visited before to potentially skip hero
-    const hasVisitedBefore = localStorage.getItem('hasVisited');
-    if (hasVisitedBefore === 'true') {
-      this.currentView = 'language-grid';
-      // Reset placeholder for returning users who haven't selected a language yet
-      this.placeholderTitle = 'Choose Your Language';
-      this.placeholderText = 'Select a language from the grid to start learning.';
-      this.placeholderIcon = 'fas fa-language';
-    } else {
-      // Set initial placeholder text for first-time visitors
-      this.placeholderTitle = 'Welcome to LingoMitra!';
-      this.placeholderText = 'Your journey to mastering new languages begins here. Click "Get Started" above or choose a language below.';
-      this.placeholderIcon = 'fas fa-book-open';
-    }
-
-
-    // Add global event listeners
-    // Note: In Vue 3 Options API, 'this' still correctly refers to the component instance
-    document.addEventListener('click', this.handleOutsideClick);
-    window.addEventListener('scroll', this.handleScroll);
-    document.addEventListener('keydown', this.handleKeyDown);
-  },
-
-  // Renamed from beforeDestroy
-  beforeUnmount() {
-    // Clean up global event listeners
-    document.removeEventListener('click', this.handleOutsideClick);
-    window.removeEventListener('scroll', this.handleScroll);
-    document.removeEventListener('keydown', this.handleKeyDown);
-  },
-
-  // --- Methods ---
-  methods: {
-    // --- Theme Handling ---
-    toggleTheme() {
-      this.darkTheme = !this.darkTheme;
-      document.body.classList.toggle('dark-theme');
-      localStorage.setItem('theme', this.darkTheme ? 'dark' : 'light');
-
-      // --- MODIFIED: Update meta tag ---
-      const themeMetaTag = document.querySelector('meta[name="theme-color"]');
-      if (themeMetaTag) {
-        // --- MODIFIED: Use background colors ---
-        const newThemeColor = this.darkTheme ? '#1a1a1a' : '#ffffff';
-        themeMetaTag.setAttribute('content', newThemeColor);
-      }
-      // --- End of modification ---
-    },
-
-    // --- Navigation ---
-    goToLanguageSelection() {
-      this.currentView = 'language-grid';
-      this.resetLessonState(); // Clear language/lesson specific data
-      this.showHeaderLanguageDropdown = false; // Ensure dropdown is closed
-
-      // Mark user as having visited (for skipping hero next time)
-      localStorage.setItem('hasVisited', 'true');
-
-      // Optionally scroll to the top of the language grid section
-      // $nextTick is still available
-      this.$nextTick(() => {
-        // Use document.querySelector as $el might not be reliable in the same way or needed
-        const gridSection = document.querySelector('.language-grid-section');
-        if (gridSection) {
-          gridSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      prevLesson: function () {
+        return this.lessonIndex > 0 ? this.lessons[this.lessonIndex - 1] : null;
+      },
+      nextLesson: function () {
+        return this.lessonIndex >= 0 && this.lessonIndex < this.lessons.length - 1
+          ? this.lessons[this.lessonIndex + 1] : null;
+      },
+      lessonEyebrow: function () {
+        if (!this.currentLesson) return '';
+        if (!this.currentLesson.number) return 'Introduction';
+        return 'Lesson ' + this.currentLesson.number + ' of ' + this.lessons.length;
+      },
+      doneCount: function () {
+        var done = this.doneList(this.language && this.language.code);
+        var ids = {};
+        this.lessons.forEach(function (l) { ids[l.id] = true; });
+        return done.filter(function (id) { return ids[id]; }).length;
+      },
+      /* Resume: the most recently opened lesson across every language. */
+      resume: function () {
+        var best = null;
+        for (var code in this.progress) {
+          var entry = this.progress[code];
+          if (!entry || !entry.last || !entry.at) continue;
+          if (!best || entry.at > best.at) best = entry;
         }
-      });
-    },
+        if (!best) return null;
+        var lang = findLanguage(best.code);
+        if (!lang) return null;
+        if (this.view === 'lesson' && this.language && this.language.code === lang.code) return null;
+        return {
+          lang: lang,
+          id: best.last,
+          title: best.title || 'Continue where you left off',
+          number: best.number || 1
+        };
+      },
 
-    // --- Dropdown Handling ---
-    toggleHeaderLanguageDropdown() {
-      this.showHeaderLanguageDropdown = !this.showHeaderLanguageDropdown;
-    },
-
-    // --- Get Lesson Number ---
-    getLessonNumber(lessonId) {
-      if (!lessonId || typeof lessonId !== 'string') return null; // Basic validation
-      if (lessonId.includes('-lesson-')) {
-        const parts = lessonId.split('-lesson-');
-        return parts.length > 1 && !isNaN(parts[1]) ? parts[1] : null;
-      }
-      return null;
-    },
-
-    handleOutsideClick(event) {
-      // In Vue 3, accessing DOM elements directly might be discouraged in favor of refs,
-      // but for this simple case targeting document elements might be okay.
-      // However, using document.querySelector is safer than relying on this.$el within a global listener.
-      const headerDropdown = document.querySelector('.language-dropdown');
-      if (this.showHeaderLanguageDropdown && headerDropdown && !headerDropdown.contains(event.target)) {
-        this.showHeaderLanguageDropdown = false;
-      }
-      const modalOverlay = document.querySelector('.modal-overlay');
-      // Check if the modal is actually shown in the data property
-      if (this.showLessonModal && event.target === modalOverlay) {
-        this.closeLessonModal();
-      }
-    },
-
-
-    // --- Lesson Modal Handling ---
-    openLessonModal() {
-      this.showLessonModal = true;
-      document.body.classList.add('modal-open');
-      this.$nextTick(() => {
-        // Use document.querySelector
-        const modal = document.querySelector('.lesson-selection-modal');
-        const overlay = document.querySelector('.modal-overlay');
-        if (modal) modal.classList.add('show');
-        if (overlay) overlay.classList.add('show');
-      });
-    },
-
-    closeLessonModal() {
-      // Use document.querySelector
-      const modal = document.querySelector('.lesson-selection-modal');
-      const overlay = document.querySelector('.modal-overlay');
-      if (modal) modal.classList.remove('show');
-      if (overlay) overlay.classList.remove('show');
-
-      setTimeout(() => {
-        this.showLessonModal = false;
-        document.body.classList.remove('modal-open');
-      }, 300);
-    },
-
-
-    selectLessonFromModal(lessonId) {
-      if (lessonId === this.selectedLessonId) {
-        this.closeLessonModal();
-        return;
-      }
-      this.selectedLessonId = lessonId;
-      this.selectLesson();
-      this.closeLessonModal();
-    },
-
-    // --- Keyboard Handling ---
-    handleKeyDown(event) {
-      if (event.key === 'Escape' && this.showLessonModal) {
-        this.closeLessonModal();
-      }
-    },
-
-    // --- Language & Lesson Loading ---
-    selectLanguage(language) {
-      if (this.selectedLanguage && this.selectedLanguage.code === language.code && this.currentView === 'lesson-selector') {
-        this.showHeaderLanguageDropdown = false;
-        return;
-      }
-
-      this.selectedLanguage = language;
-      this.showHeaderLanguageDropdown = false;
-
-      if (language) {
-        this.loading = true;
-        this.resetLessonState(false);
-        setTimeout(() => {
-          this.fetchLanguageContent(language.code);
-        }, 300); // Short delay for visual feedback
-      } else {
-        this.goToLanguageSelection();
-      }
-    },
-
-    async fetchLanguageContent(languageCode) {
-      this.loading = true;
-      this.errorMessage = '';
-      this.errorDetails = '';
-      this.comingSoon = false;
-
-      try {
-        // IMPORTANT: Adjust this path if your files are located elsewhere
-        const fileName = `./courses/${languageCode}-lesson.md`;
-        const response = await fetch(fileName);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            console.warn(`Lesson file not found: ${fileName}`);
-            this.renderComingSoon();
-          } else {
-            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-          }
-        } else {
-          const markdown = await response.text();
-          this.lessons = this.splitIntoLessons(markdown, languageCode);
-
-          if (this.lessons && this.lessons.length > 0) {
-            this.currentView = 'lesson-selector';
-            this.selectedLessonId = this.lessons[0].id; // Select the first lesson
-            this.selectLesson(); // Render the first lesson (will also scroll)
-          } else {
-            console.warn(`No lessons found in file: ${fileName}`);
-            this.renderComingSoon();
-          }
+      /* ── Practice ────────────────────────────────────────────────────── */
+      lessonItems: function () {
+        return (this.itemsByLesson[this.lessonId] || []);
+      },
+      /* Practice is available on any lesson once earlier material exists —
+         recombining what you already met is the point, not a fallback. */
+      practicePool: function () {
+        var upTo = this.currentLesson ? this.currentLesson.number : 0;
+        var n = 0;
+        var byLesson = this.itemsByLesson;
+        Object.keys(byLesson).forEach(function (id) {
+          byLesson[id].forEach(function (item) { if (item.lessonNumber <= upTo) n++; });
+        });
+        return n;
+      },
+      currentItem: function () {
+        return this.practiceSet[this.practiceIndex] || null;
+      },
+      practiceProgress: function () {
+        if (!this.practiceSet.length) return 0;
+        var done = this.practiceDone ? this.practiceSet.length : this.practiceIndex;
+        return Math.round((done / this.practiceSet.length) * 100);
+      },
+      practiceReview: function () {
+        return this.practiceResults.filter(function (r) { return r.status !== 'correct'; });
+      },
+      speechTag: function () {
+        return this.language ? window.speech.tagFor(this.language.code) : 'en';
+      },
+      verdictHeadline: function () {
+        if (!this.verdict) return '';
+        return {
+          match: 'That\u2019s it.',
+          case: 'Right \u2014 mind the capitals.',
+          accents: 'Right \u2014 mind the accents.',
+          order: 'Same words, different order.',
+          near: 'One word apart.',
+          differs: 'The course puts it this way.',
+          revealed: 'The course puts it this way.'
+        }[this.verdict.result] || 'The course puts it this way.';
+      },
+      verdictNote: function () {
+        if (!this.verdict) return '';
+        if (this.verdict.via === 'roman') {
+          return 'Counted from the romanisation \u2014 typing the script is the next step, not a requirement.';
         }
-      } catch (error) {
-        console.error('Error loading or processing lesson:', error);
-        this.errorMessage = 'Sorry, we couldn\'t load the lessons for this language.';
-        this.errorTitle = 'Failed to Load Lessons';
-        this.errorDetails = error.message;
-        this.resetLessonState();
-        this.currentView = 'lesson-selector'; // Stay on lesson view to show error
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    splitIntoLessons(markdown, languageCode) {
-      const lessons = [];
-      if (!markdown) return lessons;
-
-      // Split by H2 headings (##), keeping the heading with the content
-      const sections = markdown.split(/(?=^##\s)/gm);
-      let lessonIndex = 1;
-      let introContent = '';
-
-      sections.forEach((section, index) => {
-        section = section.trim();
-        if (!section) return;
-
-        // If the first chunk doesn't start with ##, treat it as intro
-        if (index === 0 && !section.startsWith('## ')) {
-          introContent = section;
-          if (introContent) {
-            // Try to extract H1 title if present, otherwise default
-            const introTitleMatch = introContent.match(/^#\s+(.*)/);
-            const introTitle = introTitleMatch ? introTitleMatch[1].trim() : 'Introduction';
-            lessons.push({
-              id: `${languageCode}-intro`,
-              title: introTitle,
-              content: introContent // Keep the H1 in the content for rendering
-            });
-          }
+        switch (this.verdict.result) {
+          case 'case':
+            return this.language && this.language.code === 'german'
+              ? 'In German capitals carry meaning: every noun takes one, and Sie (formal \u201cyou\u201d) is capitalised to separate it from sie (\u201cthey\u201d).'
+              : 'The words are right; only the capitals differ.';
+          case 'accents':
+            return 'The words are right; the marks above the letters differ.';
+          case 'order':
+            return 'You used exactly the right words. Compare the order \u2014 in some sentences both are fine.';
+          case 'near':
+            return 'Everything matches but one word. Compare them and work out why.';
+          case 'differs':
+            return 'This is the answer the course gives. If yours says the same thing another way, it may also be right.';
+          default:
+            return '';
         }
-        // Process sections starting with ## as lessons
-        else if (section.startsWith('## ')) {
-          const lines = section.split('\n');
-          const title = lines[0].substring(3).trim(); // Get text after '## '
-          const content = section; // Content includes the '## Title' line
-          lessons.push({
-            id: `${languageCode}-lesson-${lessonIndex}`,
-            title: title,
-            content: content
+      },
+      attemptMarkup: function () {
+        if (!this.verdict || !this.currentItem) return '';
+        return this.diffMarkup(this.attempt, this.verdict.target || this.currentItem.answer);
+      },
+      /* Offline and this course was never opened is a different problem from a
+         failed request, and it has a different answer. */
+      offlineMiss: function () {
+        return this.error && !this.online;
+      },
+      errorTitle: function () {
+        return this.offlineMiss ? 'Not downloaded yet' : 'That course didn\u2019t load';
+      },
+      errorBody: function () {
+        return this.offlineMiss
+          ? 'You are offline, and this course has not been opened on this device before. Any course you have already read stays available.'
+          : 'The lesson file could not be fetched. Check your connection and try again \u2014 nothing you have read has been lost.';
+      },
+
+      voiceNote: function () {
+        if (this.voice.ok || !this.language) return '';
+        if (this.voice.reason === 'unsupported') return 'This browser cannot read sentences aloud.';
+        return 'This device has no ' + this.language.name + ' voice installed, so there is nothing to play.';
+      },
+
+      /* ── Command palette results ────────────────────────────────────── */
+      paletteResults: function () {
+        var q = this.query.trim().toLowerCase();
+        var out = [];
+        var self = this;
+
+        this.lessons.forEach(function (lesson) {
+          if (q && lesson.title.toLowerCase().indexOf(q) < 0) return;
+          out.push({
+            key: 'l:' + lesson.id,
+            group: self.language ? self.language.name + ' lessons' : 'Lessons',
+            icon: '#i-book',
+            label: mark(lesson.title, self.query.trim()),
+            hint: lesson.number ? String(lesson.number) : 'Intro',
+            action: function () { self.goToLesson(lesson.id); }
           });
-          lessonIndex++;
-        }
-        // Handle edge case where the *very first* section IS a lesson (starts with ##)
-        else if (index === 0 && section.startsWith('## ')) {
-          const lines = section.split('\n');
-          const title = lines[0].substring(3).trim();
-          const content = section;
-          lessons.push({
-            id: `${languageCode}-lesson-${lessonIndex}`,
-            title: title,
-            content: content
+        });
+
+        LANGUAGES.forEach(function (lang) {
+          if (self.language && self.language.code === lang.code) return;
+          if (q && lang.name.toLowerCase().indexOf(q) < 0) return;
+          out.push({
+            key: 'g:' + lang.code,
+            group: 'Switch language',
+            icon: '#i-cap',
+            flag: lang.flagCode,
+            label: mark(lang.name, self.query.trim()),
+            action: function () { self.selectLanguage(lang); }
           });
-          lessonIndex++;
+        });
+
+        if (!q || 'all languages'.indexOf(q) >= 0 || 'home'.indexOf(q) >= 0) {
+          out.push({
+            key: 'a:home',
+            group: 'Go to',
+            icon: '#i-grid',
+            label: 'All languages',
+            action: function () { self.goHome(); }
+          });
         }
-      });
-      return lessons;
-    },
 
-    // Method to load the selected lesson's content
-    selectLesson() {
-      if (this.selectedLessonId && this.lessons.length > 0) {
-        const lesson = this.lessons.find(l => l.id === this.selectedLessonId);
-        if (lesson) {
-          this.renderMarkdown(lesson.content);
-          // Use $nextTick to ensure the DOM is updated before scrolling
-          this.$nextTick(() => this.scrollToContentTop());
-        } else {
-          console.warn("Selected lesson ID not found:", this.selectedLessonId);
-          this.lessonContent = '<p>Error: Could not find the selected lesson.</p>'; // Display error inline
-          this.errorMessage = ''; // Clear global error message
-        }
-      }
-    },
+        out.forEach(function (item, i) { item.index = i; });
+        return out;
+      },
 
-    // *** START: NEW NAVIGATION METHODS ***
-    goToPreviousLesson() {
-      if (this.previousLesson) {
-        this.selectedLessonId = this.previousLesson.id;
-        this.selectLesson(); // Re-use existing method to load content and scroll
-      }
-    },
-
-    goToNextLesson() {
-      if (this.nextLesson) {
-        this.selectedLessonId = this.nextLesson.id;
-        this.selectLesson(); // Re-use existing method to load content and scroll
-      }
-    },
-    // *** END: NEW NAVIGATION METHODS ***
-
-    // Render Markdown to HTML
-    renderMarkdown(markdown) {
-      if (typeof marked === 'undefined') {
-        console.error("marked.js library is not loaded.");
-        this.errorMessage = "Error: Markdown parser not available.";
-        this.errorTitle = "Display Error";
-        this.lessonContent = null;
-        return;
-      }
-      if (!markdown) {
-        this.lessonContent = ''; // Handle empty markdown case
-        return;
-      }
-
-      try {
-        // 1. Remove the main H1/H2 title from the content before rendering
-        //    (it's already displayed in the header/modal/buttons)
-        let processedMarkdown = markdown
-          .replace(/^#\s+.*/, '')   // Remove H1 if it was part of intro
-          .replace(/^##\s+.*/, '')  // Remove H2 if it was part of a lesson
-          .trim();
-
-        // 2. Parse the remaining Markdown
-        let html = marked.parse(processedMarkdown);
-
-        // 3. Post-process HTML (Table Containers, Thinking Points, Practice Answers)
-        // Wrap tables
-        html = html.replace(/<table([\s\S]*?)>/g, '<div class="table-container"><table$1>');
-        html = html.replace(/<\/table>/g, '</table></div>');
-
-        // Transform Thinking Point blockquotes
-        html = html.replace(
-          /<blockquote>\s*<p>\s*<strong>Thinking Point:?(.*?)<\/strong>([\s\S]*?)<\/p>\s*<\/blockquote>/gi,
-          (match, title, content) => {
-            const trimmedTitle = title ? title.trim() : '';
-            // Need to handle potential paragraphs within the blockquote content
-            let formattedContent = content.trim().replace(/<\/?p>/g, ''); // Basic removal of inner <p> tags
-            return `<div class="thinking-point"><div class="thinking-header">Thinking Point${trimmedTitle ? ': ' + trimmedTitle : ''}</div><div>${formattedContent}</div></div>`;
+      paletteGroups: function () {
+        var groups = [];
+        var byName = {};
+        this.paletteResults.forEach(function (item) {
+          if (!byName[item.group]) {
+            byName[item.group] = { name: item.group, items: [] };
+            groups.push(byName[item.group]);
           }
-        );
+          byName[item.group].items.push(item);
+        });
+        return groups;
+      }
+    },
 
-        // Transform Practice Answers sections
-        const practiceStartMarker = '<p><em><strong>Practice Answers:</strong></em></p>';
-        let practiceEndMarker = '<hr>'; // Assumes HR separates the answers section
-        let startIndex = html.indexOf(practiceStartMarker);
-
-        while (startIndex !== -1) {
-          const replacementStart = '<div class="practice-answers"><h4>Practice Answers</h4>'; // Simple title
-          // Remove the original marker and insert the new div start
-          html = html.substring(0, startIndex) + replacementStart + html.substring(startIndex + practiceStartMarker.length);
-
-          // Find the *next* <hr> tag after the inserted div start
-          let endIndex = html.indexOf(practiceEndMarker, startIndex + replacementStart.length);
-
-          if (endIndex !== -1) {
-            // Replace the <hr> with the closing div tag
-            html = html.substring(0, endIndex) + '</div>' + html.substring(endIndex + practiceEndMarker.length);
-          } else {
-            // If no <hr> is found after the start marker, close the div at the end of the content
-            html += '</div>';
-            console.warn("Practice Answers section started but no subsequent <hr> found. Closed at end of content.");
-            break; // Exit loop as we can't find more markers reliably
+    watch: {
+      langMenuOpen: function (open) {
+        var self = this;
+        if (open) this.$nextTick(function () { fx.menuIn(self.$refs.langMenu); });
+      },
+      sheetOpen: function (open) {
+        var self = this;
+        document.body.classList.toggle('is-locked', open || this.paletteOpen);
+        if (open) this.$nextTick(function () { fx.sheetIn(self.$refs.sheet); });
+      },
+      paletteOpen: function (open) {
+        document.body.classList.toggle('is-locked', open || this.sheetOpen);
+      },
+      nextLesson: function (lesson) {
+        var self = this;
+        this.$nextTick(function () {
+          if (self.$refs.pagerNext) {
+            fx.swapText(self.$refs.pagerNext,
+              lesson ? lesson.title : 'You finished ' + (self.language ? self.language.name : ''));
           }
-
-          // Look for the next start marker *after* the section we just processed
-          startIndex = html.indexOf(practiceStartMarker, startIndex + replacementStart.length); // Corrected search position
-        }
-
-
-        // Set the final processed HTML
-        this.lessonContent = html;
-        this.errorMessage = ''; // Clear any previous errors
-        this.comingSoon = false; // Ensure coming soon is false
-
-      } catch (error) {
-        console.error("Error rendering Markdown:", error);
-        this.errorMessage = "Sorry, we couldn't display the lesson content correctly.";
-        this.errorTitle = "Display Error";
-        this.errorDetails = error.message;
-        this.lessonContent = null; // Clear content on error
-      }
-    },
-
-    // --- UI Helpers ---
-    renderComingSoon() {
-      this.comingSoon = true;
-      this.lessonContent = null;
-      this.lessons = [];
-      this.selectedLessonId = '';
-      this.errorMessage = '';
-      this.currentView = 'lesson-selector'; // Stay on view to show message
-    },
-
-    resetLessonState(resetLanguage = true) {
-      if (resetLanguage) {
-        this.selectedLanguage = null;
-      }
-      this.lessons = [];
-      this.selectedLessonId = '';
-      this.lessonContent = null;
-      this.errorMessage = '';
-      this.errorDetails = '';
-      this.comingSoon = false;
-      // Don't change currentView here automatically
-    },
-
-    // Format lesson titles (remove "Lesson X:" prefix)
-    formatLessonTitle(title) {
-      if (!title) return '';
-      // Remove prefixes like "Lesson 1:", "1:", "Introduction:", etc.
-      return title.replace(/^(Lesson\s+\d+:?|Intro(?:duction)?:?|\d+:?)\s*/i, '').trim();
-    },
-
-
-    handleScroll() {
-      this.showScrollTop = window.pageYOffset > 300;
-    },
-
-    scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-
-    // Scroll to the top of the lesson content area
-    // *** UPDATED scrollToContentTop ***
-    scrollToContentTop() {
-      // Use document.querySelector
-      const contentArea = document.querySelector('.content');
-      if (contentArea) {
-        const header = document.querySelector('header');
-        const floatingHeader = document.querySelector('.floating-lesson-header');
-        const headerHeight = header ? header.offsetHeight : 0;
-        // Get height of floating header ONLY if it's actually displayed
-        const floatingHeaderHeight = (floatingHeader && this.lessonContent && !this.loading && this.currentView === 'lesson-selector') ? floatingHeader.offsetHeight : 0;
-        const topPadding = 20; // Extra space above content
-
-        const offset = headerHeight + floatingHeaderHeight + topPadding;
-
-        // Get the top position of the content area WRAPPER (which contains the content)
-        const contentWrapper = document.querySelector('.lesson-content-wrapper');
-        // If wrapper exists, scroll to it, otherwise fallback to the main content area
-        const elementToScrollTo = contentWrapper || contentArea;
-
-        // Calculate the absolute top position of the element relative to the document
-        const elementTop = elementToScrollTo.getBoundingClientRect().top + window.pageYOffset;
-
-        // Calculate the final scroll position
-        const scrollToPosition = elementTop - offset;
-
-
-        window.scrollTo({
-          top: scrollToPosition < 0 ? 0 : scrollToPosition, // Prevent scrolling above 0
-          behavior: 'smooth'
         });
       }
-    } // End of scrollToContentTop
-  } // End of methods
-}); // End of Vue.createApp({})
+    },
 
-// --- Mount the Application ---
-app.mount('#app');
+    created: function () {
+      window.addEventListener('scroll', this.onScroll, { passive: true });
+      window.addEventListener('resize', this.onResize, { passive: true });
+      window.addEventListener('online', this.onConnectivity);
+      window.addEventListener('offline', this.onConnectivity);
+      window.addEventListener('hashchange', this.readRoute);
+      window.addEventListener('keydown', this.onKey, true);
+      document.addEventListener('click', this.onDocClick);
+    },
+
+    mounted: function () {
+      var self = this;
+      fx.scrollBar(this.$refs.progressBar);
+      this.readRoute();
+      this.$nextTick(function () { self.enterHome(); });
+    },
+
+    beforeUnmount: function () {
+      window.removeEventListener('scroll', this.onScroll);
+      window.removeEventListener('resize', this.onResize);
+      window.removeEventListener('online', this.onConnectivity);
+      window.removeEventListener('offline', this.onConnectivity);
+      window.removeEventListener('hashchange', this.readRoute);
+      window.removeEventListener('keydown', this.onKey, true);
+      document.removeEventListener('click', this.onDocClick);
+      this.disconnectSections();
+    },
+
+    methods: {
+      /* ── Theme ───────────────────────────────────────────────────────── */
+      toggleTheme: function () {
+        this.dark = !this.dark;
+        var root = document.documentElement;
+        root.classList.toggle('theme-dark', this.dark);
+        root.classList.toggle('theme-light', !this.dark);
+        store.setRaw(STORE_THEME, this.dark ? 'dark' : 'light');
+
+        /* Keep the browser chrome in step with the explicit choice, not the
+           system preference the meta tag would otherwise follow. */
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', this.dark ? '#050315' : '#fbfbfe');
+      },
+
+      /* ── Routing: #/<language>/<lesson-number|intro> ─────────────────── */
+      readRoute: function () {
+        var parts = (location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);
+        var lang = parts[0] ? findLanguage(parts[0]) : null;
+
+        if (!lang) {
+          this.view = 'home';
+          this.language = null;
+          this.resetLesson();
+          return;
+        }
+
+        var practising = parts[parts.length - 1] === 'practice';
+        if (practising) parts = parts.slice(0, -1);
+
+        var wantId = parts[1]
+          ? (parts[1] === 'intro' ? lang.code + '-intro' : lang.code + '-lesson-' + parts[1])
+          : null;
+
+        if (this.language && this.language.code === lang.code && this.lessons.length) {
+          if (wantId && wantId !== this.lessonId) this.showLesson(wantId);
+          this.view = practising ? 'practice' : 'lesson';
+          if (practising && !this.practiceSet.length) this.resumePracticeRoute();
+          if (!practising) this.stopListening();
+          return;
+        }
+
+        this.language = lang;
+        this.view = practising ? 'practice' : 'lesson';
+        this.pendingPractice = practising;
+        this.loadCourse(lang, wantId);
+      },
+
+      /* A /practice URL opened cold (a share, a refresh, a back button) needs a
+         session built for it rather than an empty screen. */
+      resumePracticeRoute: function () {
+        if (!this.language || !this.lessons.length) return;
+        var upTo = this.currentLesson ? this.currentLesson.number : this.furthestLesson();
+        var set = window.practice.session(this.itemsByLesson, upTo, 8);
+        if (!set.length) { this.navigate(this.routeFor(this.language.code, this.lessonId), true); return; }
+        this.practiceSet = set;
+        this.practiceIndex = 0;
+        this.practiceResults = [];
+        this.practiceDone = false;
+        this.resetAttempt();
+        this.probeVoice();
+      },
+
+      routeFor: function (langCode, lessonId) {
+        if (!langCode) return '#/';
+        if (!lessonId) return '#/' + langCode;
+        var tail = lessonId.indexOf('-lesson-') >= 0 ? lessonId.split('-lesson-')[1] : 'intro';
+        return '#/' + langCode + '/' + tail;
+      },
+
+      navigate: function (hash, replace) {
+        if (location.hash === hash) { this.readRoute(); return; }
+        if (replace) history.replaceState(null, '', hash);
+        else location.hash = hash;
+        if (replace) this.readRoute();
+      },
+
+      goHome: function () {
+        this.stopListening();
+        window.speech.cancel();
+        this.closeOverlays();
+        this.navigate('#/');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      },
+
+      selectLanguage: function (lang) {
+        this.closeOverlays();
+        var saved = this.progress[lang.code];
+        this.navigate(this.routeFor(lang.code, saved && saved.last));
+      },
+
+      openResume: function () {
+        if (!this.resume) return;
+        this.navigate(this.routeFor(this.resume.lang.code, this.resume.id));
+      },
+
+      goToLesson: function (id) {
+        this.stopListening();
+        window.speech.cancel();
+        this.closeOverlays();
+        this.navigate(this.routeFor(this.language.code, id));
+      },
+
+      retry: function () {
+        if (this.language) this.loadCourse(this.language, this.lessonId);
+      },
+
+      /* ── Course loading ──────────────────────────────────────────────── */
+      resetLesson: function () {
+        this.stopListening();
+        window.speech.cancel();
+        this.practiceSet = [];
+        this.practiceResults = [];
+        this.practiceIndex = 0;
+        this.practiceDone = false;
+        this.verdict = null;
+        this.attempt = '';
+        this.lessons = [];
+        this.lessonId = '';
+        this.html = '';
+        this.sections = [];
+        this.error = false;
+        this.errorDetail = '';
+        this.comingSoon = false;
+        this.readProgress = 0;
+        this.disconnectSections();
+      },
+
+      loadCourse: function (lang, wantId) {
+        var self = this;
+
+        if (courseCache[lang.code]) {
+          this.lessons = courseCache[lang.code];
+          this.itemsByLesson = this.buildItems(lang, this.lessons);
+          this.showLesson(wantId || this.lessons[0].id);
+          if (this.pendingPractice) {
+            this.pendingPractice = false;
+            this.view = 'practice';
+            this.resumePracticeRoute();
+          }
+          return;
+        }
+
+        this.resetLesson();
+        this.loading = true;
+        this.pendingName = lang.name;
+
+        fetch('./courses/' + lang.code + '-lesson.md')
+          .then(function (res) {
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + res.statusText);
+            return res.text();
+          })
+          .then(function (markdown) {
+            if (markdown == null) { self.comingSoon = true; self.loading = false; return; }
+            var lessons = window.content.splitLessons(markdown, lang.code);
+            if (!lessons.length) { self.comingSoon = true; self.loading = false; return; }
+            courseCache[lang.code] = lessons;
+            self.lessons = lessons;
+            self.itemsByLesson = self.buildItems(lang, lessons);
+            /* Clear `loading` first: showLesson wires up the section observer and
+               the table affordances, which need the article in the DOM. */
+            self.loading = false;
+            self.showLesson(wantId || lessons[0].id);
+            if (self.pendingPractice) {
+              self.pendingPractice = false;
+              self.view = 'practice';
+              self.resumePracticeRoute();
+            }
+          })
+          .catch(function (err) {
+            self.error = true;
+            self.errorDetail = err && err.message ? err.message : String(err);
+            self.loading = false;
+          });
+      },
+
+      showLesson: function (id) {
+        var self = this;
+        var lesson = null;
+        for (var i = 0; i < this.lessons.length; i++) {
+          if (this.lessons[i].id === id) { lesson = this.lessons[i]; break; }
+        }
+        if (!lesson) lesson = this.lessons[0];
+        if (!lesson) return;
+
+        this.lessonId = lesson.id;
+
+        try {
+          var rendered = window.content.renderLesson(lesson);
+          this.html = rendered.html;
+          this.sections = rendered.sections;
+          this.readingMinutes = rendered.minutes;
+          this.error = false;
+        } catch (err) {
+          this.error = true;
+          this.errorDetail = err.message;
+          return;
+        }
+
+        this.rememberPlace(lesson);
+        this.probeVoice();
+        this.activeSection = this.sections.length ? this.sections[0].id : '';
+        this.readProgress = 0;
+
+        this.$nextTick(function () {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+          self.observeSections();
+          self.markScrollableTables();
+          self.scrollRailIntoView();
+          fx.fadeUp(document.querySelector('.lesson-head'), { y: 8 });
+          if (self.$refs.pagerNext) {
+            fx.swapText(self.$refs.pagerNext,
+              self.nextLesson ? self.nextLesson.title : 'You finished ' + self.language.name);
+          }
+          self.onScroll();
+        });
+      },
+
+      /* ── Practice ─────────────────────────────────────────────────────
+         Every prompt and answer here was written by the course author. Nothing
+         is generated, so nothing can be hallucinated. */
+      buildItems: function (lang, lessons) {
+        if (practiceCache[lang.code]) return practiceCache[lang.code];
+        var byLesson = {};
+        lessons.forEach(function (lesson) {
+          var got = window.practice.extract(lesson);
+          if (got.length) byLesson[lesson.id] = got;
+        });
+        practiceCache[lang.code] = byLesson;
+        return byLesson;
+      },
+
+      startPractice: function (scope) {
+        if (!this.language || !this.lessons.length) return;
+        this.practiceScope = scope || 'lesson';
+
+        var upTo = this.currentLesson ? this.currentLesson.number : this.furthestLesson();
+        var set = window.practice.session(this.itemsByLesson, upTo, 8);
+        if (!set.length) return;
+
+        this.practiceSet = set;
+        this.practiceIndex = 0;
+        this.practiceResults = [];
+        this.practiceDone = false;
+        this.resetAttempt();
+        this.probeVoice();
+
+        this.returnTo = location.hash;
+        this.navigate(this.routeFor(this.language.code, this.lessonId) + '/practice');
+      },
+
+      exitPractice: function () {
+        this.stopListening();
+        window.speech.cancel();
+        var back = this.returnTo || this.routeFor(this.language.code, this.lessonId);
+        this.returnTo = '';
+        this.navigate(back);
+      },
+
+      resetAttempt: function () {
+        this.attempt = '';
+        this.verdict = null;
+        this.heard = '';
+        var self = this;
+        this.$nextTick(function () {
+          if (self.$refs.answerInput) self.$refs.answerInput.focus();
+        });
+      },
+
+      checkAttempt: function () {
+        if (!this.currentItem || this.verdict) return;
+        if (!this.attempt.trim()) return;
+        this.stopListening();
+        this.verdict = window.practice.check(this.attempt, this.currentItem);
+        this.recordResult();
+      },
+
+      revealItem: function () {
+        if (!this.currentItem || this.verdict) return;
+        this.stopListening();
+        this.verdict = {
+          result: 'revealed',
+          status: 'different',
+          correct: false,
+          target: this.currentItem.answer,
+          via: 'answer'
+        };
+        this.recordResult();
+      },
+
+      recordResult: function () {
+        var self = this;
+        this.practiceResults.push({ item: this.currentItem, status: this.verdict.status });
+        this.$nextTick(function () {
+          if (self.$refs.nextBtn) self.$refs.nextBtn.focus();
+          /* Hearing the answer right after producing it is the point of the
+             exercise, so play it without being asked. */
+          if (self.voice.ok && self.currentItem) self.hear(self.currentItem.answer);
+        });
+      },
+
+      nextItem: function () {
+        window.speech.cancel();
+        if (this.practiceIndex + 1 >= this.practiceSet.length) {
+          this.practiceDone = true;
+          return;
+        }
+        this.practiceIndex++;
+        this.resetAttempt();
+      },
+
+      furthestLesson: function () {
+        var entry = this.language && this.progress[this.language.code];
+        return (entry && entry.number) || 1;
+      },
+
+      /* ── Speech ──────────────────────────────────────────────────────── */
+      probeVoice: function () {
+        var self = this;
+        this.canListen = window.speech.canListen();
+        this.cloudSpeech = window.speech.listenIsCloud();
+        if (!this.language) return;
+        window.speech.probeVoice(this.language.code, function (result) {
+          self.voice = result;
+        });
+      },
+
+      hear: function (text) {
+        var self = this;
+        if (!this.voice.ok || !text) return;
+        this.speakingNow = true;
+        window.speech.speak(text, this.language.code, {
+          onend: function () { self.speakingNow = false; },
+          onerror: function () { self.speakingNow = false; }
+        });
+      },
+
+      toggleListen: function () {
+        if (this.listening) { this.stopListening(); return; }
+        if (!this.canListen || !this.language) return;
+
+        var self = this;
+        window.speech.cancel();
+        this.heard = '';
+        this.listening = true;
+
+        this._stopListen = window.speech.listen(this.language.code, {
+          oninterim: function (text) { self.heard = text; },
+          onfinal: function (text) {
+            self.attempt = text;
+            self.heard = text;
+          },
+          onend: function (gotResult) {
+            self.listening = false;
+            self._stopListen = null;
+            if (gotResult) self.$nextTick(function () { self.checkAttempt(); });
+          },
+          onerror: function () { self.listening = false; }
+        });
+      },
+
+      stopListening: function () {
+        if (this._stopListen) { this._stopListen(); this._stopListen = null; }
+        this.listening = false;
+      },
+
+      /* Word-level diff, used only to point at what differs. It never rewrites
+         the learner's sentence. */
+      diffMarkup: function (attempt, target) {
+        var norm = window.practice.normalise;
+        var a = norm(attempt).split(' ').filter(Boolean);
+        var t = norm(target).split(' ').filter(Boolean);
+        var pool = t.map(function (w) { return w.toLowerCase(); });
+
+        return a.map(function (word) {
+          var i = pool.indexOf(word.toLowerCase());
+          if (i >= 0) { pool.splice(i, 1); return escapeHtml(word); }
+          return '<mark>' + escapeHtml(word) + '</mark>';
+        }).join(' ');
+      },
+
+      /* ── Progress ────────────────────────────────────────────────────── */
+      doneList: function (code) {
+        var entry = code && this.progress[code];
+        return (entry && entry.done) || [];
+      },
+      isDone: function (id) {
+        return this.language ? this.doneList(this.language.code).indexOf(id) >= 0 : false;
+      },
+      progressFor: function (code) {
+        var entry = this.progress[code];
+        var total = (courseCache[code] && courseCache[code].length) ||
+          (entry && entry.total) || 0;
+        if (!total) return 0;
+        return Math.min(100, Math.round((this.doneList(code).length / total) * 100));
+      },
+      toggleDone: function (id) {
+        if (!this.language) return;
+        var code = this.language.code;
+        var entry = this.progress[code] || { code: code, done: [] };
+        var done = (entry.done || []).slice();
+        var i = done.indexOf(id);
+        if (i >= 0) done.splice(i, 1); else done.push(id);
+        entry.done = done;
+        entry.total = this.lessons.length;
+        this.progress = Object.assign({}, this.progress, (function (o) { o[code] = entry; return o; })({}));
+        store.set(STORE_PROGRESS, this.progress);
+      },
+      rememberPlace: function (lesson) {
+        var code = this.language.code;
+        var entry = this.progress[code] || { code: code, done: [] };
+        entry.code = code;
+        entry.last = lesson.id;
+        entry.title = lesson.title;
+        entry.number = lesson.number || 1;
+        entry.total = this.lessons.length;
+        entry.at = Date.now();
+        this.progress = Object.assign({}, this.progress, (function (o) { o[code] = entry; return o; })({}));
+        store.set(STORE_PROGRESS, this.progress);
+      },
+
+      /* ── Reading progress + section tracking ─────────────────────────── */
+      onScroll: function () {
+        this.showTop = window.scrollY > 600;
+
+        var article = this.$refs.prose;
+        if (!article) { this.readProgress = 0; return; }
+        var rect = article.getBoundingClientRect();
+        var total = rect.height - window.innerHeight + 160;
+        if (total <= 0) { this.readProgress = 100; return; }
+        var passed = -rect.top + 80;
+        this.readProgress = Math.min(100, Math.max(0, Math.round((passed / total) * 100)));
+      },
+
+      onResize: function () {
+        this.markScrollableTables();
+      },
+
+      onConnectivity: function () {
+        this.online = navigator.onLine !== false;
+        /* Coming back online, a course that failed for that reason is worth
+           another go without making the reader ask for it. */
+        if (this.online && this.error && this.language) this.retry();
+      },
+
+      observeSections: function () {
+        var self = this;
+        this.disconnectSections();
+        if (!('IntersectionObserver' in window) || !this.$refs.prose) return;
+
+        var headings = this.$refs.prose.querySelectorAll('h2, h3');
+        if (!headings.length) return;
+
+        this._sectionObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) self.activeSection = entry.target.id;
+          });
+        }, { rootMargin: '-72px 0px -68% 0px', threshold: 0 });
+
+        Array.prototype.forEach.call(headings, function (h) {
+          self._sectionObserver.observe(h);
+        });
+      },
+
+      /* Watermelon UI · scroll-fade: flag tables that are wider than the column
+         so the fade only shows when there is genuinely more to see. */
+      markScrollableTables: function () {
+        if (!this.$refs.prose) return;
+        Array.prototype.forEach.call(
+          this.$refs.prose.querySelectorAll('.table-wrap'),
+          function (wrap) {
+            var scroller = wrap.querySelector('.table-scroll');
+            if (!scroller) return;
+            var sync = function () {
+              var overflows = scroller.scrollWidth - scroller.clientWidth > 2;
+              wrap.dataset.overflow = overflows ? 'true' : 'false';
+              wrap.dataset.end =
+                scroller.scrollLeft >= scroller.scrollWidth - scroller.clientWidth - 2
+                  ? 'true' : 'false';
+            };
+            scroller.addEventListener('scroll', sync, { passive: true });
+            sync();
+          }
+        );
+      },
+
+      disconnectSections: function () {
+        if (this._sectionObserver) {
+          this._sectionObserver.disconnect();
+          this._sectionObserver = null;
+        }
+      },
+
+      scrollRailIntoView: function () {
+        var rail = this.$refs.railList;
+        if (!rail) return;
+        var active = rail.querySelector('[aria-current="true"]');
+        if (active) fx.scrollIntoViewSoft(active, rail);
+      },
+
+      jumpTo: function (id) {
+        this.islandOpen = false;
+        var el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: fx.reduced() ? 'auto' : 'smooth', block: 'start' });
+        this.activeSection = id;
+      },
+
+      /* ── Overlays ────────────────────────────────────────────────────── */
+      toggleIsland: function () {
+        var self = this;
+        var el = this.$refs.island;
+        var from = el ? el.getBoundingClientRect() : null;
+        this.islandOpen = !this.islandOpen;
+        this.$nextTick(function () {
+          if (from) fx.islandResize(el, self.$refs.islandPanel, from, self.islandOpen);
+          if (self.islandOpen) self.scrollActiveTopicIntoView();
+        });
+      },
+
+      scrollActiveTopicIntoView: function () {
+        var panel = this.$refs.islandPanel;
+        if (!panel) return;
+        var active = panel.querySelector('[aria-current="true"]');
+        if (active) active.scrollIntoView({ block: 'nearest' });
+      },
+
+      openPalette: function () {
+        var self = this;
+        this.query = '';
+        this.paletteIndex = 0;
+        this.paletteOpen = true;
+        this.$nextTick(function () {
+          if (self.$refs.paletteInput) self.$refs.paletteInput.focus();
+          fx.morphIn(self.$refs.palette, document.querySelector('.cmd-trigger'));
+        });
+      },
+
+      closePalette: function () {
+        this.paletteOpen = false;
+        this.query = '';
+      },
+
+      closeOverlays: function () {
+        this.paletteOpen = false;
+        this.sheetOpen = false;
+        this.islandOpen = false;
+        this.langMenuOpen = false;
+      },
+
+      movePalette: function (delta) {
+        var n = this.paletteResults.length;
+        if (!n) return;
+        this.paletteIndex = (this.paletteIndex + delta + n) % n;
+        var self = this;
+        this.$nextTick(function () {
+          var el = self.$refs.paletteBody &&
+            self.$refs.paletteBody.querySelector('[data-index="' + self.paletteIndex + '"]');
+          if (el) el.scrollIntoView({ block: 'nearest' });
+        });
+      },
+
+      runPalette: function (item) {
+        var chosen = item || this.paletteResults[this.paletteIndex];
+        if (!chosen) return;
+        this.closePalette();
+        chosen.action();
+      },
+
+      /* ── Global input ────────────────────────────────────────────────── */
+      onKey: function (e) {
+        var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          this.paletteOpen ? this.closePalette() : this.openPalette();
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          if (this.paletteOpen) { e.preventDefault(); this.closePalette(); return; }
+          if (this.sheetOpen) { this.sheetOpen = false; return; }
+          if (this.islandOpen) { this.toggleIsland(); return; }
+          if (this.langMenuOpen) { this.langMenuOpen = false; return; }
+          if (this.listening) { this.stopListening(); return; }
+          if (this.view === 'practice') { e.preventDefault(); this.exitPractice(); return; }
+        }
+
+        if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+
+        /* In practice, the arrow keys belong to the text field, not the course. */
+        if (this.view === 'practice') return;
+
+        if (this.view === 'lesson' && !this.paletteOpen) {
+          if (e.key === 'ArrowLeft' && this.prevLesson) {
+            e.preventDefault(); this.goToLesson(this.prevLesson.id);
+          } else if (e.key === 'ArrowRight' && this.nextLesson) {
+            e.preventDefault(); this.goToLesson(this.nextLesson.id);
+          } else if (e.key === '/') {
+            e.preventDefault(); this.openPalette();
+          }
+        }
+      },
+
+      onDocClick: function (e) {
+        if (this.langMenuOpen && this.$refs.langSwitch && !this.$refs.langSwitch.contains(e.target)) {
+          this.langMenuOpen = false;
+        }
+      },
+
+      /* ── Entrances (Motion Primitives · in-view) ─────────────────────── */
+      enterHome: function () {
+        if (this.view !== 'home') return;
+        var self = this;
+        this.$nextTick(function () {
+          fx.textEffect(self.$refs.heroTitle, { stagger: 0.045, delay: 0.06 });
+          if (self.$refs.langGrid) {
+            fx.revealGroup(self.$refs.langGrid.children, { stagger: 0.032, immediate: true, delay: 0.12 });
+          }
+        });
+      },
+
+      scrollTop: function () {
+        window.scrollTo({ top: 0, behavior: fx.reduced() ? 'auto' : 'smooth' });
+      }
+    }
+  });
+
+  app.mount('#app');
+
+  /* ── Service worker ─────────────────────────────────────────────────── */
+  if (navigator.serviceWorker) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .catch(function (err) { console.warn('Service worker registration failed:', err); });
+    });
+  }
+})();

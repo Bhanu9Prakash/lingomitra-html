@@ -1,245 +1,726 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-dark">
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>LingoMitra — Learn languages by pattern</title>
 
-  <link rel="canonical" href="https://bhanu9prakash.github.io/lingomitra-html/">
   <meta name="description"
-    content="Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, Kannada, and Hindi to boost your language skills!">
+    content="LingoMitra teaches German, Spanish, French, Hindi, Chinese, Japanese and Kannada through the patterns behind them — not flashcards. Free, offline-capable, no account.">
+  <link rel="canonical" href="https://lingomitra.com/">
 
-  <head>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#050315">
+  <meta name="color-scheme" content="dark light">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-  </head>
-
-
-  <link rel="canonical" href="https://bhanu9prakash.github.io/lingomitra-html/">
-
-
-  <meta property="og:title" content="LingoMitra - Learn Languages the Smart Way">
-  <meta property="og:description"
-    content="Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, Kannada, and Hindi to boost your language skills!">
-  <meta property="og:image" content="https://bhanu9prakash.github.io/lingomitra-html/og-image.png">
-  <meta property="og:url" content="https://bhanu9prakash.github.io/lingomitra-html/">
-  <meta property="og:type" content="website">
-
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="LingoMitra - Learn Languages the Smart Way">
-  <meta name="twitter:description"
-    content="Master languages with interactive, pattern-based lessons on LingoMitra. Choose from German, Spanish, French, Chinese, Japanese, Kannada, and Hindi to boost your language skills!">
-  <meta name="twitter:image" content="https://bhanu9prakash.github.io/lingomitra-html/og-image.png">
-
-  <title>LingoMitra - Learn Languages the Smart Way</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+
+  <meta property="og:title" content="LingoMitra — Learn languages by pattern">
+  <meta property="og:description"
+    content="Seven languages taught through the patterns behind them. Free, offline-capable, no account.">
+  <meta property="og:image" content="https://lingomitra.com/og-image.png">
+  <meta property="og:url" content="https://lingomitra.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LingoMitra — Learn languages by pattern">
+  <meta name="twitter:description"
+    content="Seven languages taught through the patterns behind them. Free, offline-capable, no account.">
+  <meta name="twitter:image" content="https://lingomitra.com/og-image.png">
+
+  <!-- Typeface: Inter Variable, self-hosted (Realtime Colors design system) -->
+  <link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="styles.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
-
-  <style>
-    [v-cloak] {
-      display: none;
-    }
-  </style>
+  <!-- Paint the stored theme before first paint to avoid a flash -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('lm.theme');
+        var dark = stored ? stored === 'dark'
+          : !window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.documentElement.classList.toggle('theme-light', !dark);
+        document.documentElement.classList.toggle('theme-dark', dark);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', dark ? '#050315' : '#fbfbfe');
+      } catch (e) { /* storage blocked — dark stays the default */ }
+    })();
+  </script>
 </head>
 
 <body>
+  <!-- ── Icon set (Lucide geometry, as used by every approved source) ────── -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <g id="i-base" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round"></g>
+    </defs>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="m15 18-6-6 6-6" />
+    </symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="m9 18 6-6-6-6" />
+    </symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
+    </symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M3 5h.01" />
+      <path d="M3 12h.01" />
+      <path d="M3 19h.01" />
+      <path d="M8 5h13" />
+      <path d="M8 12h13" />
+      <path d="M8 19h13" />
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M12 7v14" />
+      <path
+        d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+    </symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+    </symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <rect width="7" height="7" x="3" y="3" rx="1" />
+      <rect width="7" height="7" x="14" y="3" rx="1" />
+      <rect width="7" height="7" x="14" y="14" rx="1" />
+      <rect width="7" height="7" x="3" y="14" rx="1" />
+    </symbol>
+    <symbol id="i-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+      <path d="m9 10-5 5 5 5" />
+    </symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path
+        d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+      <path d="M22 10v6" />
+      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+    </symbol>
+    <symbol id="i-retry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M4 9h16" />
+      <path d="M4 15h16" />
+      <path d="M10 3 8 21" />
+      <path d="m16 3-2 18" />
+    </symbol>
+    <symbol id="i-updown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="m7 15 5 5 5-5" />
+      <path d="m7 9 5-5 5 5" />
+    </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M12 19v3" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <rect x="9" y="2" width="6" height="13" rx="3" />
+    </symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+    </symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M5 4l10 8-10 8V4z" />
+      <path d="M19 5v14" />
+    </symbol>
+    <symbol id="i-cloud-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="m2 2 20 20" />
+      <path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" />
+      <path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />
+    </symbol>
+    <symbol id="i-spinner" viewBox="0 0 42 42">
+      <g fill="none" transform="translate(3 3)" stroke-width="3" stroke="currentColor">
+        <circle cx="18" cy="18" r="18" opacity="0.22" />
+        <path d="M36 18c0-9.94-8.06-18-18-18" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </symbol>
+  </svg>
+
   <div id="app" v-cloak>
-    <header>
-      <div class="container">
-        <div class="logo">
-          <img src="mascot.svg" alt="LingoMitra Mascot" class="mascot-logo">
-          <h1>LingoMitra</h1>
-        </div>
+    <!-- Motion Primitives · scroll-progress -->
+    <div class="scroll-progress" ref="progressBar" aria-hidden="true"></div>
 
-        <div class="header-controls">
-          <div class="language-dropdown" v-if="selectedLanguage && currentView !== 'language-grid'">
-            <div class="selected-language" @click="toggleHeaderLanguageDropdown">
-              <img :src="'flags/' + selectedLanguage.flagCode + '.svg'" :alt="selectedLanguage.name + ' Flag'"
-                class="language-flag">
-              <span>{{ selectedLanguage.name }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="language-dropdown-content" :class="{ 'show': showHeaderLanguageDropdown }">
-              <div class="dropdown-item" @click="goToLanguageSelection">
-                <i class="fas fa-th-large"></i> All Languages
+    <div class="app">
+      <!-- ── Topbar ──────────────────────────────────────────────────────── -->
+      <header class="topbar">
+        <div class="shell topbar__inner">
+          <a class="brand" href="#/" @click.prevent="goHome" aria-label="LingoMitra home">
+            <img src="mascot.svg" alt="" width="26" height="26">
+            <span>LingoMitra</span>
+          </a>
+
+          <nav class="topbar__crumb only-desktop" v-if="view === 'lesson' && language" aria-label="Breadcrumb">
+            <svg><use href="#i-chevron-right" /></svg>
+            <b>{{ language.name }}</b>
+            <template v-if="currentLesson">
+              <svg><use href="#i-chevron-right" /></svg>
+              <b>{{ lessonEyebrow }}</b>
+            </template>
+          </nav>
+
+          <div class="topbar__spacer"></div>
+
+          <div class="topbar__actions">
+            <button class="cmd-trigger" @click="openPalette" :aria-keyshortcuts="'Control+K Meta+K'"
+              aria-label="Search lessons">
+              <svg><use href="#i-search" /></svg>
+              <span class="only-desktop">Search lessons</span>
+              <kbd class="kbd only-desktop">{{ metaKeyLabel }}K</kbd>
+            </button>
+
+            <div class="lang-switch" ref="langSwitch" v-if="language">
+              <button class="lang-switch__btn" @click="langMenuOpen = !langMenuOpen"
+                :aria-expanded="langMenuOpen ? 'true' : 'false'" aria-haspopup="menu">
+                <img class="flag" :src="'flags/' + language.flagCode + '.svg'" :alt="''" width="18" height="18">
+                <span class="only-desktop">{{ language.name }}</span>
+                <svg><use href="#i-chevron-down" /></svg>
+              </button>
+              <div class="menu" role="menu" v-if="langMenuOpen" ref="langMenu">
+                <p class="t-micro menu__label">Switch language</p>
+                <button v-for="lang in languages" :key="lang.code" class="menu__item" role="menuitem"
+                  :aria-current="lang.code === language.code ? 'true' : 'false'" @click="selectLanguage(lang)">
+                  <img class="flag" :src="'flags/' + lang.flagCode + '.svg'" alt="" width="18" height="18">
+                  {{ lang.name }}
+                  <svg class="menu__check"><use href="#i-check" /></svg>
+                </button>
+                <hr class="separator" style="margin:5px 0">
+                <button class="menu__item" role="menuitem" @click="goHome">
+                  <svg><use href="#i-grid" /></svg>
+                  All languages
+                </button>
               </div>
-              <div v-for="lang in languages" :key="lang.code" class="dropdown-item" @click="selectLanguage(lang)">
-                <img :src="'flags/' + lang.flagCode + '.svg'" :alt="lang.name + ' Flag'" class="language-flag">
-                {{ lang.name }}
+            </div>
+
+            <button class="icon-btn icon-btn--bordered only-mobile" v-if="view === 'lesson' && lessons.length"
+              @click="sheetOpen = true" aria-label="All lessons">
+              <svg><use href="#i-list" /></svg>
+            </button>
+
+            <button class="icon-btn tip" :data-tip="dark ? 'Light theme' : 'Dark theme'" @click="toggleTheme"
+              :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" ref="themeBtn">
+              <svg><use :href="dark ? '#i-sun' : '#i-moon'" /></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── Home ────────────────────────────────────────────────────────── -->
+      <main v-if="view === 'home'">
+        <section class="home">
+          <!-- Haikei · blurry-gradient -->
+          <svg class="backdrop" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+            <defs>
+              <filter id="hk-blur" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="160" />
+              </filter>
+              <linearGradient id="hk-a" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#433bff" />
+                <stop offset="100%" stop-color="#2f27ce" />
+              </linearGradient>
+            </defs>
+            <g filter="url(#hk-blur)" opacity="0.5">
+              <ellipse cx="258" cy="150" rx="330" ry="215" fill="url(#hk-a)" />
+              <ellipse cx="1105" cy="60" rx="290" ry="180" fill="#2f27ce" opacity="0.72" />
+            </g>
+          </svg>
+
+          <div class="shell home__grid">
+            <div class="home__intro">
+              <p class="t-micro home__eyebrow">Seven languages · pattern-first</p>
+              <h1 class="t-display home__title text-effect" data-pending ref="heroTitle">Languages have patterns. We
+                teach those.</h1>
+              <p class="home__lede">Every lesson starts from the rule underneath — how verbs bend, how word order
+                shifts, why a sound changes. Free, works offline, no account.</p>
+
+              <button class="resume" v-if="resume" @click="openResume">
+                <img class="flag flag--lg" :src="'flags/' + resume.lang.flagCode + '.svg'" alt="" width="30"
+                  height="30">
+                <span class="resume__body">
+                  <span class="resume__title">{{ resume.title }}</span>
+                  <span class="resume__meta">Continue {{ resume.lang.name }} · lesson {{ resume.number }}</span>
+                </span>
+                <span class="resume__go"><svg><use href="#i-arrow-right" /></svg></span>
+              </button>
+            </div>
+
+            <div class="picker">
+              <div class="picker__head">
+                <h2 class="t-micro">Pick a language</h2>
+                <p class="t-micro">{{ languages.length }} courses</p>
+              </div>
+
+              <div class="lang-grid" ref="langGrid">
+                <button v-for="lang in languages" :key="lang.code" class="lang-card" @click="selectLanguage(lang)">
+                  <img class="flag flag--lg" :src="'flags/' + lang.flagCode + '.svg'" alt="" width="30" height="30">
+                  <span class="lang-card__body">
+                    <span class="lang-card__name">{{ lang.name }}</span>
+                    <span class="lang-card__speakers">{{ lang.speakers }}M speakers</span>
+                  </span>
+                  <svg class="lang-card__go" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                  <span class="lang-card__meter" v-if="progressFor(lang.code) > 0"
+                    :style="{ width: progressFor(lang.code) + '%' }"
+                    :aria-label="progressFor(lang.code) + '% complete'"></span>
+                </button>
               </div>
             </div>
           </div>
+        </section>
+      </main>
 
-          <div class="theme-container">
-            <button class="theme-toggle" @click="toggleTheme">
-              <i :class="darkTheme ? 'fas fa-sun' : 'fas fa-moon'"></i>
+      <!-- ── Lesson reader ───────────────────────────────────────────────── -->
+      <main v-else-if="view === 'lesson'" class="reader" :class="{ 'reader--solo': !lessons.length }">
+        <!-- Watermelon UI · macos-sidebar -->
+        <aside class="rail only-desktop" v-if="lessons.length">
+          <div class="rail__head">
+            <p class="rail__title">
+              <img class="flag" :src="'flags/' + language.flagCode + '.svg'" alt="" width="18" height="18">
+              {{ language.name }}
+            </p>
+            <div class="rail__stats">
+              <span class="meter"><i :style="{ width: progressFor(language.code) + '%' }"></i></span>
+              <span class="t-xs t-subtle t-num">{{ doneCount }}/{{ lessons.length }}</span>
+            </div>
+          </div>
+          <hr class="separator">
+          <div class="rail__list scroll-y" ref="railList">
+            <button v-for="lesson in lessons" :key="lesson.id" class="rail-item"
+              :aria-current="lesson.id === lessonId ? 'true' : 'false'"
+              :data-done="isDone(lesson.id) ? 'true' : 'false'" :data-lesson="lesson.id"
+              @click="goToLesson(lesson.id)">
+              <span class="rail-item__n">
+                <svg v-if="isDone(lesson.id) && lesson.id !== lessonId" width="12" height="12"
+                  style="display:inline-block;vertical-align:-1px"><use href="#i-check" /></svg>
+                <template v-else>{{ lesson.number || '—' }}</template>
+              </span>
+              <span class="rail-item__t">{{ lesson.title }}</span>
             </button>
           </div>
-        </div>
-      </div>
-    </header>
+        </aside>
 
-    <section class="hero" v-if="currentView === 'hero'" v-show="!loading">
-      <div class="container">
-        <div class="hero-content">
-          <div class="badge">Language Learning Simplified</div>
-          <h2>Learn Languages The Smart Way</h2>
-          <p>Master new languages naturally through pattern-based lessons. Build your vocabulary and understanding step
-            by step with our interactive approach.</p>
-          <div class="cta-buttons">
-            <button class="primary-btn" @click="goToLanguageSelection">Get Started</button>
-          </div>
-        </div>
-        <div class="hero-image">
-          <div class="character character-1"><i class="fas fa-language"></i></div>
-          <div class="character character-2"><i class="fas fa-comment-dots"></i></div>
-          <div class="character character-3"><i class="fas fa-globe-americas"></i></div>
-          <div class="character character-4"><i class="fas fa-book"></i></div>
-          <div class="character character-5"><i class="fas fa-graduation-cap"></i></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="language-grid-section" v-if="currentView === 'language-grid'" v-show="!loading">
-      <div class="container">
-        <h2>Choose Your Language Adventure</h2>
-        <p class="section-intro">Select a language to start your learning journey. Each language offers unique lessons
-          designed to help you master new skills naturally.</p>
-
-        <div class="language-grid">
-          <div v-for="lang in languages" :key="lang.code" class="language-card" @click="selectLanguage(lang)">
-            <div class="language-card-flag">
-              <img :src="'flags/' + lang.flagCode + '.svg'" :alt="lang.name + ' Flag'">
+        <div class="reader__main" v-if="!loading && !error && !comingSoon && html">
+          <header class="lesson-head">
+            <div class="lesson-head__eyebrow">
+              <span class="badge badge--accent">{{ lessonEyebrow }}</span>
+              <span class="badge badge--success" v-if="isDone(lessonId)">
+                <svg><use href="#i-check" /></svg>
+                Read
+              </span>
             </div>
-            <h3>{{ lang.name }}</h3>
-            <p class="speakers">{{ lang.speakers }} million speakers</p>
-            <button class="language-btn">Start Learning</button>
-          </div>
-        </div>
-      </div>
-    </section>
+            <h1 class="lesson-head__title">{{ currentLesson.title }}</h1>
+            <p class="lesson-head__meta">
+              <span><svg><use href="#i-hash" /></svg>{{ sections.length }} sections</span>
+              <span><svg><use href="#i-clock" /></svg>{{ readingMinutes }} min read</span>
+            </p>
+          </header>
 
-    <section class="floating-lesson-header" v-if="lessonContent && !loading && currentView === 'lesson-selector'">
-      <div class="container">
-        <div class="lesson-header-content">
-          <div class="lesson-selector-toggle" @click="openLessonModal">
-            <i class="fas fa-bars"></i>
-          </div>
-          <h2 v-if="currentLesson" class="centered-lesson-title">
-            <span v-if="getLessonNumber(currentLesson.id)">
-              Lesson {{ getLessonNumber(currentLesson.id) }}:
+          <article class="prose" ref="prose" v-html="html"></article>
+
+          <button class="practice-cta" v-if="practicePool" @click="startPractice('lesson')">
+            <svg><use href="#i-target" /></svg>
+            <span class="practice-cta__body">
+              <span class="practice-cta__title">{{ lessonItems.length ? 'Build these sentences yourself' :
+                'Practise what you have met so far' }}</span>
+              <span class="practice-cta__meta">{{ lessonItems.length
+                ? 'From this lesson, mixed with earlier ones — you produce first, the answer comes after'
+                : 'Recombining the ' + practicePool + ' sentences from earlier lessons' }}</span>
             </span>
-            {{ formatLessonTitle(currentLesson.title) }}
-          </h2>
+            <svg class="practice-cta__go"><use href="#i-arrow-right" /></svg>
+          </button>
+
+          <!-- Watermelon UI · step-pager -->
+          <nav class="pager" aria-label="Lesson navigation" v-if="lessons.length > 1">
+            <div class="pager__row">
+              <button class="pager__btn" :disabled="!prevLesson" @click="goToLesson(prevLesson.id)"
+                :aria-label="prevLesson ? 'Previous: ' + prevLesson.title : 'No previous lesson'">
+                <svg><use href="#i-chevron-left" /></svg>
+              </button>
+              <div class="pager__mid">
+                <p class="pager__label">{{ nextLesson ? 'UP NEXT' : 'END OF COURSE' }}</p>
+                <span class="pager__next" ref="pagerNext">{{ nextLesson ? nextLesson.title : 'You finished ' +
+                  language.name }}</span>
+              </div>
+              <button class="pager__btn" :disabled="!nextLesson" @click="goToLesson(nextLesson.id)"
+                :aria-label="nextLesson ? 'Next: ' + nextLesson.title : 'No next lesson'">
+                <svg><use href="#i-chevron-right" /></svg>
+              </button>
+            </div>
+            <div class="pager__mark">
+              <button class="btn btn--sm" :class="isDone(lessonId) ? 'btn--secondary' : 'btn--outline'"
+                @click="toggleDone(lessonId)">
+                <svg><use :href="isDone(lessonId) ? '#i-check-circle' : '#i-check'" /></svg>
+                {{ isDone(lessonId) ? 'Marked as read' : 'Mark as read' }}
+              </button>
+            </div>
+          </nav>
         </div>
-      </div>
-    </section>
 
-    <main class="content"
-      v-show="currentView === 'lesson-selector' || (errorMessage && currentView !== 'hero') || comingSoon">
-      <div class="container">
-        <div class="lesson-content-wrapper">
-          <div class="placeholder-content"
-            v-if="!selectedLanguage && !loading && currentView !== 'hero' && currentView !== 'language-grid'">
-            <div class="placeholder-icon">
-              <i :class="placeholderIcon"></i>
-            </div>
-            <h3>{{ placeholderTitle }}</h3>
-            <p>{{ placeholderText }}</p>
-          </div>
-
-          <div class="loading" v-if="loading">
-            <div class="spinner"></div>
-            <p>Loading lesson content...</p>
-          </div>
-
-          <div class="lesson-content" v-if="lessonContent && !loading && !errorMessage && !comingSoon"
-            v-html="lessonContent"></div>
-
-          <div v-if="errorMessage && !loading" class="error-message">
-            <i class="fas fa-exclamation-triangle"
-              style="font-size: 40px; color: var(--danger-color); margin-bottom: 15px;"></i>
-            <h3>{{ errorTitle }}</h3>
-            <p>{{ errorMessage }}</p>
-            <p v-if="errorDetails" class="error-details">Details: {{ errorDetails }}</p>
-            <button class="primary-btn" @click="goToLanguageSelection" style="margin-top: 20px;">Choose
-              Language</button>
-          </div>
-
-          <div v-if="comingSoon && !loading && !errorMessage" class="coming-soon">
-            <div class="placeholder-icon">
-              <i class="fas fa-clock"></i>
-            </div>
-            <h3>{{ selectedLanguage.name }} Lessons Coming Soon!</h3>
-            <p>We're working hard to create a comprehensive {{ selectedLanguage.name.toLowerCase() }} learning
-              experience. Check back soon!</p>
-          </div>
-
-          <div class="lesson-navigation"
-            v-if="currentLesson && !loading && !errorMessage && !comingSoon && lessons.length > 1">
-            <button class="lesson-nav-btn prev" @click="goToPreviousLesson" :disabled="!previousLesson"
-              v-if="previousLesson">
-              <i class="fas fa-arrow-left"></i>
-              <span class="lesson-nav-label">Previous</span>
-              <span class="lesson-nav-title">{{ formatLessonTitle(previousLesson.title) }}</span>
-            </button>
-            <span v-else>&nbsp;</span> <button class="lesson-nav-btn next" @click="goToNextLesson"
-              :disabled="!nextLesson" v-if="nextLesson">
-              <span class="lesson-nav-title">{{ formatLessonTitle(nextLesson.title) }}</span>
-              <span class="lesson-nav-label">Next</span>
-              <i class="fas fa-arrow-right"></i>
-            </button>
-            <span v-else>&nbsp;</span>
+        <!-- Loading: Watermelon skeleton + Motion Primitives text-shimmer -->
+        <div class="loading" v-else-if="loading">
+          <p class="loading__label">
+            <svg class="spinner" viewBox="0 0 42 42" width="18" height="18"><use href="#i-spinner" /></svg>
+            <span class="text-shimmer t-sm">Loading {{ pendingName }} lessons</span>
+          </p>
+          <div class="skeleton sk-title"></div>
+          <div class="loading__lines">
+            <div class="skeleton sk-line" style="width:100%"></div>
+            <div class="skeleton sk-line" style="width:96%"></div>
+            <div class="skeleton sk-line" style="width:88%"></div>
+            <div class="skeleton sk-block" style="margin-top:28px"></div>
+            <div class="skeleton sk-line" style="width:92%;margin-top:28px"></div>
+            <div class="skeleton sk-line" style="width:78%"></div>
           </div>
         </div>
-      </div>
-    </main>
 
-    <div class="modal-overlay" v-if="showLessonModal" @click="closeLessonModal"></div>
-    <div class="lesson-selection-modal" v-if="showLessonModal">
-      <div class="modal-header">
-        <h3>Select a Lesson</h3>
-        <button class="modal-close" @click="closeLessonModal" aria-label="Close lesson selection">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="lesson-list">
-          <div class="lesson-item" v-for="lesson in lessons" :key="lesson.id"
-            :class="{ 'active': lesson.id === selectedLessonId }" @click="selectLessonFromModal(lesson.id)">
-            <span class="lesson-number" v-if="lesson.id.includes('-lesson-')">
-              Lesson {{ lesson.id.split('-lesson-')[1] }}:
+        <!-- Error / coming soon — Watermelon UI · alert composition -->
+        <div class="reader__main" v-else>
+          <div class="state" v-if="error">
+            <div class="state__icon"
+              :style="offlineMiss ? null : 'color:var(--danger);border-color:var(--danger-line)'">
+              <svg><use :href="offlineMiss ? '#i-cloud-off' : '#i-alert'" /></svg>
+            </div>
+            <h1 class="t-h1 state__title">{{ errorTitle }}</h1>
+            <p class="state__body">{{ errorBody }}</p>
+            <p class="state__detail" v-if="errorDetail && !offlineMiss">{{ errorDetail }}</p>
+            <div class="state__actions">
+              <button class="btn btn--primary" @click="retry" v-if="!offlineMiss">
+                <svg><use href="#i-retry" /></svg>
+                Try again
+              </button>
+              <button class="btn" :class="offlineMiss ? 'btn--primary' : 'btn--ghost'" @click="goHome">
+                {{ offlineMiss ? 'See what is available' : 'Pick another language' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="state" v-else-if="comingSoon">
+            <div class="state__icon"><svg><use href="#i-clock" /></svg></div>
+            <h1 class="t-h1 state__title">{{ language.name }} isn’t written yet</h1>
+            <p class="state__body">This course is still being written. The others are ready whenever you are.</p>
+            <div class="state__actions">
+              <button class="btn btn--primary" @click="goHome">Browse languages</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ── Practice ────────────────────────────────────────────────────── -->
+      <main v-else-if="view === 'practice'" class="practice">
+        <h1 class="sr-only">Practice · {{ language.name }}</h1>
+        <div class="practice__head">
+          <p class="t-micro">Practice · {{ language.name }}</p>
+          <p class="t-micro practice__count t-num" v-if="!practiceDone">
+            {{ practiceIndex + 1 }} / {{ practiceSet.length }}
+          </p>
+          <button class="icon-btn" @click="exitPractice" aria-label="Leave practice">
+            <svg><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <div class="practice__meter" role="progressbar" :aria-valuenow="practiceIndex"
+          :aria-valuemax="practiceSet.length">
+          <i :style="{ width: practiceProgress + '%' }"></i>
+        </div>
+
+        <!-- One item -->
+        <div class="practice__body" v-if="!practiceDone && currentItem" aria-live="polite">
+          <p class="practice__instruction">
+            <svg width="14" height="14"><use href="#i-book" /></svg>
+            Lesson {{ currentItem.lessonNumber }}
+            <template v-if="currentItem.instruction">· <b>{{ currentItem.instruction }}</b></template>
+          </p>
+
+          <p class="practice__prompt">{{ currentItem.prompt }}</p>
+          <p class="practice__hint" v-if="currentItem.hint">{{ currentItem.hint }}</p>
+
+          <div class="answer-field" :data-state="verdict ? verdict.status : null">
+            <input ref="answerInput" type="text" v-model="attempt" :disabled="!!verdict" autocomplete="off"
+              autocorrect="off" autocapitalize="off" spellcheck="false" :lang="speechTag"
+              :placeholder="'Say it in ' + language.name + '…'" :aria-label="'Your answer in ' + language.name"
+              @keydown.enter.prevent="verdict ? nextItem() : checkAttempt()">
+            <button class="mic" v-if="canListen" :data-listening="listening ? 'true' : 'false'"
+              :disabled="!!verdict" @click="toggleListen"
+              :aria-label="listening ? 'Stop listening' : 'Answer by voice'">
+              <svg><use href="#i-mic" /></svg>
+            </button>
+          </div>
+
+          <div class="listening" v-if="listening" role="status">
+            <span class="wave" aria-hidden="true">
+              <i v-for="n in 12" :key="n" :style="{ animationDelay: (n * 0.07) + 's' }"></i>
             </span>
-            <span v-else class="lesson-intro">Introduction:</span>
-            <span class="lesson-title">{{ formatLessonTitle(lesson.title) }}</span>
+            <span class="listening__text">{{ heard || 'Listening…' }}</span>
           </div>
+          <p class="practice__hint t-xs" v-if="listening && cloudSpeech">
+            Your browser handles speech recognition, which may send audio to its provider.
+          </p>
+
+          <div class="practice__actions" v-if="!verdict">
+            <button class="btn btn--primary" @click="checkAttempt" :disabled="!attempt.trim()">Check</button>
+            <button class="btn btn--ghost" @click="revealItem">Show the answer</button>
+          </div>
+
+          <!-- Verdict -->
+          <div class="verdict" v-if="verdict" :data-state="verdict.status" role="status">
+            <p class="verdict__line">
+              <svg><use :href="verdict.status === 'correct' ? '#i-check-circle' : '#i-target'" /></svg>
+              {{ verdictHeadline }}
+            </p>
+            <p class="verdict__note" v-if="verdictNote">{{ verdictNote }}</p>
+
+            <div class="compare">
+              <div class="compare__row" v-if="verdict.status !== 'correct' && attempt.trim()">
+                <span class="compare__who">You</span>
+                <span class="compare__text" v-html="attemptMarkup"></span>
+                <span></span>
+              </div>
+              <div class="compare__row compare__row--answer">
+                <span class="compare__who">Course</span>
+                <span class="compare__text">
+                  {{ currentItem.answer }}
+                  <small class="compare__roman" v-if="currentItem.roman">{{ currentItem.roman }}</small>
+                </span>
+                <button class="hear" v-if="voice.ok" :data-speaking="speakingNow ? 'true' : 'false'"
+                  @click="hear(currentItem.answer)" aria-label="Hear this sentence">
+                  <svg><use href="#i-speaker" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <p class="verdict__note" v-if="!voice.ok">{{ voiceNote }}</p>
+
+            <div class="practice__actions">
+              <button class="btn btn--primary" ref="nextBtn" @click="nextItem">
+                {{ practiceIndex + 1 < practiceSet.length ? 'Next' : 'Finish' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session summary -->
+        <div class="practice__body summary" v-else-if="practiceDone">
+          <h2 class="t-h1">Session done</h2>
+          <div class="summary__stats">
+            <span class="summary__stat">
+              <b class="t-num">{{ practiceResults.filter(r => r.status === 'correct').length }}</b>
+              <span class="t-sm t-subtle">matched the course</span>
+            </span>
+            <span class="summary__stat" v-if="practiceReview.length">
+              <b class="t-num">{{ practiceReview.length }}</b>
+              <span class="t-sm t-subtle">worth another look</span>
+            </span>
+          </div>
+
+          <div class="summary__list" v-if="practiceReview.length">
+            <p class="t-micro">Compare these again</p>
+            <div class="summary__item" v-for="r in practiceReview" :key="r.item.id">
+              <p>{{ r.item.answer }}</p>
+              <button class="hear" v-if="voice.ok" @click="hear(r.item.answer)" aria-label="Hear this sentence">
+                <svg><use href="#i-speaker" /></svg>
+              </button>
+              <small>{{ r.item.prompt }}</small>
+            </div>
+          </div>
+
+          <div class="practice__actions" style="margin-top:32px">
+            <button class="btn btn--primary" @click="startPractice(practiceScope)">Practise again</button>
+            <button class="btn btn--outline" @click="exitPractice">Back to the lesson</button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer" v-if="view !== 'practice'">
+        <div class="shell footer__inner">
+          <p>© {{ year }} LingoMitra</p>
+          <p class="footer__hint">
+            <kbd class="kbd">{{ metaKeyLabel }}K</kbd>
+            to search every lesson
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ── Scroll Island — Watermelon UI · scroll-island ─────────────────── -->
+    <transition name="fade">
+      <div class="island-scrim" v-if="islandOpen" @click="islandOpen = false"></div>
+    </transition>
+    <div class="island" v-if="view === 'lesson' && html && !loading" :data-open="islandOpen ? 'true' : 'false'"
+      ref="island">
+      <div class="island__bar" role="button" tabindex="0" @click="toggleIsland" @keydown.enter.prevent="toggleIsland"
+        @keydown.space.prevent="toggleIsland" :aria-expanded="islandOpen ? 'true' : 'false'"
+        aria-label="Lesson contents and reading progress">
+        <span class="island__ring" :style="{ '--p': readProgress }" aria-hidden="true"></span>
+        <span class="island__label">Contents</span>
+        <svg class="island__chev"><use href="#i-chevron-down" /></svg>
+        <span class="island__pct t-num">{{ readProgress }}%</span>
+      </div>
+      <div class="island__panel scroll-y" v-show="islandOpen" ref="islandPanel">
+        <hr class="separator">
+        <button class="island-topic" v-for="s in sections" :key="s.id" :data-depth="s.depth"
+          :aria-current="s.id === activeSection ? 'true' : 'false'" @click="jumpTo(s.id)">{{ s.text }}</button>
+        <p class="island__empty" v-if="!sections.length">This lesson has no sub-sections.</p>
+        <div class="only-mobile">
+          <hr class="separator" style="margin:8px 6px">
+          <button class="island-topic" @click="sheetOpen = true; islandOpen = false">
+            All {{ lessons.length }} lessons
+          </button>
         </div>
       </div>
     </div>
 
-    <footer>
-      <div class="container">
-        <div class="footer-bottom">
-          <p>© {{ currentYear }} LingoMitra. Master languages naturally through pattern recognition.</p>
+    <!-- Mobile: lesson list — Watermelon UI · sheet -->
+    <transition name="fade">
+      <div class="sheet-scrim" v-if="sheetOpen" @click="sheetOpen = false"></div>
+    </transition>
+    <div class="sheet" v-if="sheetOpen" ref="sheet" role="dialog" aria-modal="true" aria-label="All lessons">
+      <span class="sheet__grip"></span>
+      <div class="sheet__head">
+        <p class="rail__title">
+          <img class="flag" :src="'flags/' + language.flagCode + '.svg'" alt="" width="18" height="18">
+          {{ language.name }}
+          <span class="t-xs t-subtle t-num" style="margin-left:auto">{{ doneCount }}/{{ lessons.length }}</span>
+        </p>
+        <button class="icon-btn" @click="sheetOpen = false" aria-label="Close">
+          <svg><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <div class="sheet__list scroll-y">
+        <button v-for="lesson in lessons" :key="lesson.id" class="rail-item"
+          :aria-current="lesson.id === lessonId ? 'true' : 'false'" :data-done="isDone(lesson.id) ? 'true' : 'false'"
+          @click="goToLesson(lesson.id); sheetOpen = false">
+          <span class="rail-item__n">{{ lesson.number || '—' }}</span>
+          <span class="rail-item__t">{{ lesson.title }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Command palette — Watermelon UI · command-search ──────────────── -->
+    <transition name="fade">
+      <div class="cmd-scrim" v-if="paletteOpen" @click="closePalette"></div>
+    </transition>
+    <div class="cmd" v-if="paletteOpen" ref="palette" role="dialog" aria-modal="true" aria-label="Search">
+      <div class="cmd__head">
+        <svg><use href="#i-search" /></svg>
+        <input ref="paletteInput" class="cmd__input" type="text" v-model="query" autocomplete="off" spellcheck="false"
+          :placeholder="language ? 'Search ' + language.name + ' lessons…' : 'Search lessons…'" role="combobox"
+          aria-expanded="true" aria-controls="cmd-results" @keydown.down.prevent="movePalette(1)"
+          @keydown.up.prevent="movePalette(-1)" @keydown.enter.prevent="runPalette()" @keydown.esc="closePalette">
+        <button class="icon-btn only-mobile" @click="closePalette" aria-label="Close">
+          <svg><use href="#i-x" /></svg>
+        </button>
+        <kbd class="kbd only-desktop">Esc</kbd>
+      </div>
+
+      <div class="cmd__body scroll-y" id="cmd-results" role="listbox" ref="paletteBody">
+        <p class="cmd__empty" v-if="!paletteResults.length">Nothing matches “{{ query }}”.</p>
+        <div class="cmd__group" v-for="group in paletteGroups" :key="group.name">
+          <p class="t-micro cmd__grouplabel">{{ group.name }}</p>
+          <button v-for="item in group.items" :key="item.key" class="cmd-item" role="option"
+            :data-active="item.index === paletteIndex ? 'true' : 'false'"
+            :aria-selected="item.index === paletteIndex ? 'true' : 'false'" :data-index="item.index"
+            @mouseenter="paletteIndex = item.index" @click="runPalette(item)">
+            <svg><use :href="item.icon" /></svg>
+            <img class="flag" v-if="item.flag" :src="'flags/' + item.flag + '.svg'" alt="" width="18" height="18">
+            <span class="cmd-item__t" v-html="item.label"></span>
+            <span class="cmd-item__n" v-if="item.hint">{{ item.hint }}</span>
+          </button>
         </div>
       </div>
-    </footer>
 
-    <button id="scrollToTop" class="scroll-to-top" :class="{ 'visible': showScrollTop }" @click="scrollToTop"
-      aria-label="Scroll to top">
-      <i class="fas fa-arrow-up"></i>
+      <div class="cmd__foot">
+        <span><kbd class="kbd"><svg width="11" height="11"><use href="#i-updown" /></svg></kbd> navigate</span>
+        <span><kbd class="kbd"><svg width="11" height="11"><use href="#i-enter" /></svg></kbd> open</span>
+        <span><kbd class="kbd">Esc</kbd> close</span>
+      </div>
+    </div>
+
+    <button class="to-top" :data-visible="showTop ? 'true' : 'false'" @click="scrollTop" aria-label="Back to top">
+      <svg><use href="#i-arrow-up" /></svg>
     </button>
   </div>
 
@@ -248,11 +729,19 @@
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
       "name": "LingoMitra",
-      "url": "https://bhanu9prakash.github.io/lingomitra-html/",
-      "logo": "https://bhanu9prakash.github.io/lingomitra-html/mascot.svg",
-      "description": "Master languages with interactive, pattern-based lessons."
+      "url": "https://lingomitra.com/",
+      "logo": "https://lingomitra.com/mascot.svg",
+      "description": "Learn languages through the patterns behind them."
     }
   </script>
+
+  <script src="vendor/vue.global.prod.js"></script>
+  <script src="vendor/marked.umd.js"></script>
+  <script src="vendor/motion.min.js"></script>
+  <script src="js/motion-fx.js"></script>
+  <script src="js/practice.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/content.js"></script>
   <script src="script.js"></script>
 </body>
 
