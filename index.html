@@ -215,6 +215,38 @@
       <path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" />
       <path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />
     </symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+    </symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
+    </symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 5H3" />
+      <path d="M12 19H3" />
+      <path d="M14 3v4" />
+      <path d="M16 17v4" />
+      <path d="M21 12h-9" />
+      <path d="M21 19h-5" />
+      <path d="M21 5h-7" />
+      <path d="M8 10v4" />
+      <path d="M8 12H3" />
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    </symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <rect x="9" y="9" width="6" height="6" rx="1" />
+      <path d="M15 2v2" /><path d="M15 20v2" /><path d="M2 15h2" /><path d="M2 9h2" />
+      <path d="M20 15h2" /><path d="M20 9h2" /><path d="M9 2v2" /><path d="M9 20v2" />
+    </symbol>
     <symbol id="i-spinner" viewBox="0 0 42 42">
       <g fill="none" transform="translate(3 3)" stroke-width="3" stroke="currentColor">
         <circle cx="18" cy="18" r="18" opacity="0.22" />
@@ -281,6 +313,11 @@
             <button class="icon-btn icon-btn--bordered only-mobile" v-if="view === 'lesson' && lessons.length"
               @click="sheetOpen = true" aria-label="All lessons">
               <svg><use href="#i-list" /></svg>
+            </button>
+
+            <button class="icon-btn tip" data-tip="Conversation partner" @click="openSettings"
+              aria-label="Conversation partner settings" v-if="view !== 'settings'">
+              <svg><use href="#i-sliders" /></svg>
             </button>
 
             <button class="icon-btn tip" :data-tip="dark ? 'Light theme' : 'Dark theme'" @click="toggleTheme"
@@ -410,6 +447,17 @@
               <span class="practice-cta__meta">{{ lessonItems.length
                 ? 'From this lesson, mixed with earlier ones — you produce first, the answer comes after'
                 : 'Recombining the ' + practicePool + ' sentences from earlier lessons' }}</span>
+            </span>
+            <svg class="practice-cta__go"><use href="#i-arrow-right" /></svg>
+          </button>
+
+          <button class="practice-cta" v-if="practicePool" @click="openTalk" style="margin-top:12px">
+            <svg><use href="#i-chat" /></svg>
+            <span class="practice-cta__body">
+              <span class="practice-cta__title">Have a conversation in {{ language.name }}</span>
+              <span class="practice-cta__meta">{{ tutorState.ready
+                ? 'A partner who stays inside lessons 1\u2013' + (currentLesson.number || 1) + ' \u2014 nothing you have not met'
+                : 'Needs a model first \u2014 your own key, or one running on this machine' }}</span>
             </span>
             <svg class="practice-cta__go"><use href="#i-arrow-right" /></svg>
           </button>
@@ -572,6 +620,26 @@
               </div>
             </div>
 
+            <!-- Second opinion: only when the course's answer and yours differ,
+                 and only if a model has been set up. -->
+            <div class="second" :class="{ 'second--ok': second.acceptable }" v-if="second.state === 'done'"
+              role="status">
+              <svg><use :href="second.acceptable ? '#i-check-circle' : '#i-bulb'" /></svg>
+              <b>{{ second.acceptable ? 'Yours works too' : 'Worth another look' }}</b>
+              <p>{{ second.why }}</p>
+              <span class="second__from">{{ second.from }} · the course’s answer stands where they disagree</span>
+            </div>
+            <div class="second" v-else-if="second.state === 'busy'" role="status">
+              <svg><use href="#i-clock" /></svg>
+              <b>Asking whether yours also works</b>
+              <p><span class="thinking-dots"><i></i><i></i><i></i></span></p>
+            </div>
+            <button class="btn btn--ghost btn--sm" v-else-if="canAskSecond" @click="askSecond"
+              style="margin-top:14px">
+              <svg><use href="#i-bulb" /></svg>
+              Does mine work too?
+            </button>
+
             <p class="verdict__note" v-if="!voice.ok">{{ voiceNote }}</p>
 
             <div class="practice__actions">
@@ -614,7 +682,242 @@
         </div>
       </main>
 
-      <footer class="footer" v-if="view !== 'practice'">
+      <!-- ── Conversation ──────────────────────────────────── -->
+      <main v-else-if="view === 'talk'" class="talk">
+        <h1 class="sr-only">Conversation · {{ language.name }}</h1>
+
+        <div class="talk__head">
+          <button class="icon-btn" @click="exitTalk" aria-label="Leave the conversation">
+            <svg><use href="#i-x" /></svg>
+          </button>
+          <p class="t-micro">{{ language.name }} · lessons 1–{{ talkUpTo }}</p>
+          <span class="badge" :class="tutorState.local ? 'badge--success' : 'badge--accent'"
+            v-if="tutorState.ready" :title="tutorState.model">
+            <svg><use :href="tutorState.local ? '#i-cpu' : '#i-chat'" /></svg>
+            {{ tutorState.local ? 'On this machine' : 'Your key' }}
+          </span>
+        </div>
+
+        <div class="talk__scroll scroll-y" :class="{ 'talk__scroll--live': talkTurns.length }" ref="talkScroll">
+          <!-- No model chosen yet. Watermelon UI · alert composition -->
+          <template v-if="!tutorState.ready">
+            <div class="notice notice--accent">
+              <svg><use href="#i-shield" /></svg>
+              <b>Choose a conversation partner first</b>
+              <p>
+                LingoMitra has no server, so the model is yours: one running on this
+                machine through Ollama or LM Studio, or a provider you hold the key for.
+                Either way nothing you type here reaches us.
+              </p>
+            </div>
+            <div class="practice__actions" style="margin-top:20px">
+              <button class="btn btn--primary" @click="openSettings">
+                <svg><use href="#i-sliders" /></svg>
+                Set one up
+              </button>
+              <button class="btn btn--ghost" @click="exitTalk">Back to the lesson</button>
+            </div>
+          </template>
+
+          <!-- Opening: pick something to talk about -->
+          <template v-else-if="!talkTurns.length">
+            <div class="notice">
+              <svg><use href="#i-chat" /></svg>
+              <b>Only what you have met</b>
+              <p>
+                The partner is held to lessons 1–{{ talkUpTo }}. It will not teach you
+                anything new, and it will not hand you the answer — if you get stuck it
+                asks a smaller question instead.
+              </p>
+            </div>
+            <p class="t-micro" style="margin-top:26px">What shall we talk about?</p>
+            <div class="scenarios">
+              <button class="scenario" v-for="s in talkScenarios" :key="s.id" :disabled="loading"
+                :aria-pressed="scenario === s.id ? 'true' : 'false'" @click="beginTalk(s)">
+                {{ s.label }}
+              </button>
+            </div>
+          </template>
+
+          <!-- The conversation -->
+          <template v-else>
+            <div class="turn" v-for="(t, i) in talkTurns" :key="i" :class="{ 'turn--you': t.role === 'user' }">
+              <span class="turn__who" v-if="t.role !== 'user'">
+                <img src="mascot.svg" alt="" width="22" height="22">
+              </span>
+              <div>
+                <div class="turn__bubble" :lang="t.role === 'user' ? speechTag : speechTag">
+                  <span class="thinking-dots" v-if="!t.text && t.role !== 'user'" aria-label="Thinking">
+                    <i></i><i></i><i></i>
+                  </span>
+                  <template v-else>{{ said(t.text) }}</template>
+                  <small class="turn__gloss" v-if="gloss(t.text)">{{ gloss(t.text) }}</small>
+                </div>
+                <button class="turn__replay" v-if="t.role !== 'user' && t.text && voice.ok"
+                  @click="hear(said(t.text))" aria-label="Hear this again">
+                  <svg><use href="#i-speaker" /></svg>
+                </button>
+              </div>
+            </div>
+
+          </template>
+
+          <!-- Kept outside the branches above: an opening turn can fail before
+               there is any conversation to attach the message to. -->
+          <div class="notice notice--bad" v-if="talkError">
+            <svg><use href="#i-alert" /></svg>
+            <b>The model did not answer</b>
+            <p>{{ talkError }}</p>
+          </div>
+        </div>
+
+        <!-- Composer — Kokonut UI · ai-prompt -->
+        <form class="composer" v-if="tutorState.ready && talkTurns.length" @submit.prevent="sendTurn">
+          <div class="composer__row">
+            <input type="text" v-model="talkInput" :lang="speechTag" autocomplete="off" autocorrect="off"
+              autocapitalize="sentences" :disabled="talkBusy"
+              :placeholder="'Answer in ' + language.name + '\u2026'"
+              :aria-label="'Your reply in ' + language.name">
+            <button type="button" class="mic-big" v-if="canListen" :data-listening="listening ? 'true' : 'false'"
+              :disabled="talkBusy" @click="toggleTalkListen"
+              :aria-label="listening ? 'Stop listening' : 'Reply by voice'">
+              <svg><use href="#i-mic" /></svg>
+            </button>
+            <button type="submit" class="composer__send" :disabled="!talkInput.trim() || talkBusy"
+              aria-label="Send">
+              <svg><use href="#i-send" /></svg>
+            </button>
+          </div>
+          <p class="composer__hint" v-if="listening">
+            <span class="wave" aria-hidden="true">
+              <i v-for="n in 12" :key="n" :style="{ animationDelay: (n * 0.07) + 's' }"></i>
+            </span>
+            {{ heard || 'Listening\u2026' }}
+          </p>
+          <p class="composer__hint" v-if="listening && cloudSpeech">
+            Your browser handles speech recognition, which may send audio to its provider.
+          </p>
+          <p class="composer__hint" v-else-if="talkBusy">
+            <span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            Thinking…
+          </p>
+        </form>
+      </main>
+
+      <!-- ── Conversation partner settings ───────────────────────── -->
+      <main v-else-if="view === 'settings'">
+        <div class="setup">
+          <h1 class="t-h1">Conversation partner</h1>
+          <p class="t-sm t-subtle" style="margin-top:8px">
+            The lessons and the practice engine work on their own. This is only for the
+            conversation view and for second opinions on a practice answer.
+          </p>
+
+          <div class="notice notice--accent">
+            <svg><use href="#i-shield" /></svg>
+            <b>Your key stays in this browser</b>
+            <p>
+              LingoMitra has no server of its own. A key you enter is saved in this
+              browser’s local storage and sent only to the provider you pick, straight
+              from this page. Clear it any time with Forget.
+            </p>
+          </div>
+
+          <div class="setup__section">
+            <p class="t-micro">Start from</p>
+            <div class="presets">
+              <button class="scenario" v-for="p in tutorPresets" :key="p.id"
+                :aria-pressed="form.preset === p.id ? 'true' : 'false'" @click="applyPreset(p)">
+                {{ p.label }}
+              </button>
+              <button class="scenario" :aria-pressed="form.preset === 'anthropic' ? 'true' : 'false'"
+                @click="applyPreset({ id: 'anthropic', provider: 'anthropic' })">Claude</button>
+            </div>
+            <p class="field__hint">
+              Ollama and LM Studio run the model on this machine — no key, no account,
+              and nothing leaves the device. The rest are hosted and need a key.
+            </p>
+          </div>
+
+          <div class="setup__section">
+            <p class="t-micro">Details</p>
+
+            <div class="field" v-if="form.provider === 'openai'">
+              <label for="f-base">Endpoint</label>
+              <input id="f-base" type="text" v-model.trim="form.baseUrl" autocomplete="off" spellcheck="false"
+                placeholder="http://localhost:11434/v1">
+              <p class="field__hint">An OpenAI-compatible base URL. Ollama serves one at
+                <code>localhost:11434/v1</code>, LM Studio at <code>localhost:1234/v1</code>.</p>
+            </div>
+
+            <div class="field" v-if="form.provider === 'anthropic'">
+              <label for="f-model">Model</label>
+              <div class="field__select">
+                <select id="f-model" v-model="form.model">
+                  <option v-for="m in anthropicModels" :key="m.id" :value="m.id">{{ m.label }}</option>
+                </select>
+                <svg><use href="#i-chevron-down" /></svg>
+              </div>
+            </div>
+            <div class="field" v-else>
+              <label for="f-model-text">Model</label>
+              <input id="f-model-text" type="text" v-model.trim="form.model" autocomplete="off" spellcheck="false"
+                placeholder="llama3.2">
+              <p class="field__hint">Whatever name your runtime or provider uses. A 7–8B
+                instruct model is enough for conversation at this level.</p>
+            </div>
+
+            <div class="field">
+              <label for="f-key">{{ form.provider === 'anthropic' ? 'Anthropic API key' : 'API key' }}</label>
+              <input id="f-key" type="password" v-model.trim="form.key" autocomplete="off" spellcheck="false"
+                :placeholder="form.provider === 'anthropic' ? 'sk-ant-\u2026' : 'Leave blank for a local model'">
+              <p class="field__hint" v-if="form.provider === 'anthropic'">
+                From console.anthropic.com. Requests go from this page to Anthropic and
+                are billed to your account.
+              </p>
+              <p class="field__hint" v-else>Ollama and LM Studio ignore this. Hosted providers need it.</p>
+            </div>
+          </div>
+
+          <div class="notice" :class="tutorTest.state === 'ok' ? 'notice--good' : (tutorTest.state === 'bad' ? 'notice--bad' : '')"
+            v-if="tutorTest.state" role="status">
+            <svg><use :href="tutorTest.state === 'ok' ? '#i-check-circle' : (tutorTest.state === 'bad' ? '#i-alert' : '#i-clock')" /></svg>
+            <b>{{ tutorTest.title }}</b>
+            <p>{{ tutorTest.body }}</p>
+          </div>
+
+          <div class="practice__actions" style="margin-top:26px">
+            <button class="btn btn--primary" @click="testTutor" :disabled="tutorTest.state === 'busy'">
+              <svg v-if="tutorTest.state === 'busy'" class="spinner" viewBox="0 0 42 42" width="15" height="15">
+                <use href="#i-spinner" />
+              </svg>
+              <svg v-else><use href="#i-check" /></svg>
+              Save and test
+            </button>
+            <button class="btn btn--outline" @click="doneSettings">Done</button>
+            <button class="btn btn--ghost" @click="forgetTutor" v-if="tutorState.ready">Forget</button>
+          </div>
+
+          <div class="setup__section">
+            <p class="t-micro">Second opinion in practice</p>
+            <p class="field__hint" style="margin-top:10px">
+              When your answer differs from the course’s, LingoMitra can ask the model
+              whether yours also works. It sees both sentences, so it is comparing rather
+              than inventing — which is why a small local model can do it. The course
+              always wins where they disagree, and this is never asked for Kannada.
+            </p>
+            <div class="field">
+              <label>
+                <input type="checkbox" v-model="secondOpinion" @change="saveSecondOpinion"
+                  style="width:auto;height:auto;margin-right:8px;vertical-align:-2px">
+                Offer a second opinion
+              </label>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer" v-if="view !== 'practice' && view !== 'talk'">
         <div class="shell footer__inner">
           <p>© {{ year }} LingoMitra</p>
           <p class="footer__hint">
@@ -741,6 +1044,8 @@
   <script src="js/motion-fx.js"></script>
   <script src="js/practice.js"></script>
   <script src="js/speech.js"></script>
+  <script src="js/tutor.js"></script>
+  <script src="js/coach.js"></script>
   <script src="js/content.js"></script>
   <script src="script.js"></script>
 </body>

@@ -71,6 +71,13 @@ correctly offline.
 | (nothing) exercises were read, not done | `.practice` — elicit, attempt, check, hear | Watermelon UI · `input`, `labeled-progress-indicator`, `alert`, `audio-player` transport |
 | (nothing) no voice input | `.mic` + `.listening` waveform | Kokonut UI · `ai-voice` |
 | (nothing) no answer feedback | `.verdict` + `.compare` | Watermelon UI · `alert`, `inline-toast` |
+| (nothing) no conversation | `.talk` / `.turn` / `.turn__bubble` — tutor left, learner right, gloss under the sentence | Watermelon UI · `contextual-ai-bar` (round transport), Kokonut UI · `ai-chat` bubble |
+| (nothing) nothing to type into | `.composer` — one field, mic, send | Kokonut UI · `ai-prompt` |
+| (nothing) no voice state in chat | `.mic-big` + `.composer__hint` wave | Watermelon UI · `voice-chat-disclosure` |
+| (nothing) waiting had no shape | `.thinking-dots` | Kokonut UI · `ai-loading` |
+| (nothing) nothing to choose | `.scenario` / `.scenarios`, `.presets` | Watermelon UI · `select-ai-agent` (pressed pill) |
+| (nothing) no settings screen | `.setup`, `.field`, `.field__select`, `.notice` | Watermelon UI · `input`, `select`, `alert` |
+| (nothing) practice could not defer | `.second` — a dashed second opinion inside the verdict | Watermelon UI · `alert` (dashed variant) |
 | `.hero-image` floating Font Awesome circles | `.backdrop` blurry-gradient SVG | Haikei · blurry gradient |
 | `.hero h2` static headline | `.text-effect` word-by-word reveal | Motion Primitives · `text-effect` (`fade-in-blur`) |
 | Font Awesome CDN (~75 KB for 10 icons) | inline SVG sprite in `index.html` | Lucide geometry, as used by every approved source |
@@ -152,7 +159,20 @@ adding the on-device model layer, which has a brief there.
 
 ## Note on AI
 
-There is no chat surface and nothing is generated: every practice prompt and
-answer was written by the course author. An on-device model layer is planned as
-an opt-in enhancement on top of what exists, never as a dependency; PEDAGOGY.md
-sets out what it may and may not do.
+Every practice prompt and answer is authored — 1,628 of them, extracted from the
+course markdown. Nothing on the practice screen is generated, and the
+deterministic checker in `js/practice.js` never calls a model.
+
+On top of that sits an **opt-in** conversation tier (`js/tutor.js` transport,
+`js/coach.js` pedagogy). It is off until the learner points it at a model, and
+the app is fully usable without it — lessons, practice, voice and offline all
+work with no model configured. Two surfaces use it:
+
+* `#/<language>/talk` — a conversation partner held to lessons 1..N.
+* A second opinion inside practice, offered only where the deterministic checker
+  withheld judgement.
+
+`PEDAGOGY.md` sets out what the model may and may not do. Two design rules that
+show up in the UI: the key notice appears **before** the key field, not after
+it; and a model running on the learner's own machine is labelled as such, in
+green, because it is a materially different privacy story from a hosted one.

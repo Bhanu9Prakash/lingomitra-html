@@ -26,6 +26,13 @@ German · Spanish · French · Hindi · Chinese · Japanese · Kannada
   works on a phone with no Indic or CJK keyboard.
 - **Answer keys stay closed** until you ask for them, so practice exercises are
   worth attempting.
+- **Conversation** (opt-in) — talk to a partner that is held to the lessons you
+  have actually covered. It will not teach ahead of the course and it will not
+  hand you the answer. Point it at a model running on your own machine through
+  [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) — no
+  download in the browser, nothing leaving the device — or use your own API key
+  for a hosted one. Keys are kept in your browser and sent only to the provider
+  you chose. Everything else in the app works with no model configured.
 - **Keyboard** — ← / → move between lessons, Esc closes any overlay.
 - **Themes** — dark by default, light on request, system preference respected on
   first visit.
@@ -57,6 +64,8 @@ script.js           state, hash routing, storage
 js/content.js       markdown → lesson model (pure)
 js/practice.js      exercises → checkable items, and the checker (pure)
 js/speech.js        text-to-speech and voice input (Web Speech API)
+js/tutor.js         model transport — Anthropic + OpenAI-compatible (Ollama, LM Studio)
+js/coach.js         what the model is allowed to say (pure)
 js/motion-fx.js     the animation layer (Motion)
 courses/*.md        lesson content
 icons/ screenshots/ PWA assets (see tools/)
@@ -70,6 +79,7 @@ fonts/              Inter Variable
 ```sh
 node tools/practice-report.js   # how many exercises extract, per course
 node tools/practice-test.js     # checker behaviour
+node tools/coach-test.js        # the syllabus ceiling, and that prompts stay bounded
 ```
 
 Regenerating PWA assets (needs `playwright` and its bundled Chromium):
