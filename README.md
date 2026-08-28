@@ -102,3 +102,9 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. The service worker needs `localhost` or
 HTTPS; everything else is plain files.
+
+Every path in `index.html`, `manifest.json` and `service-worker.js` is relative,
+so the app also works served from a subdirectory — `example.com/lingomitra/` —
+with no build step and no configuration. Both cases are covered by the checks
+above; if you add an asset, keep its path relative or installability and offline
+break at a subpath only, which is easy to miss.

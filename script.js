@@ -1381,9 +1381,27 @@
   app.mount('#app');
 
   /* ── Service worker ─────────────────────────────────────────────────── */
+
+  /* On a first visit the course is fetched before the worker takes control, so
+     it lands in the browser's HTTP cache but not in ours — and "open a course
+     once and it stays readable offline" would quietly mean "twice". Re-request
+     it the moment control arrives: the worker sees it and stores it, while the
+     browser serves it from its own cache rather than downloading again. */
+  function warmCourse() {
+    var code = (location.hash || '').replace(/^#\/?/, '').split('/')[0];
+    if (findLanguage(code)) fetch('./courses/' + code + '-lesson.md').catch(function () { });
+  }
+
   if (navigator.serviceWorker) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      /* Relative, so the app also works when it is served from a subdirectory
+         rather than a domain root. The default scope is the worker's own
+         directory, which is exactly the app root either way. */
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function () {
+          if (navigator.serviceWorker.controller) return;
+          navigator.serviceWorker.addEventListener('controllerchange', warmCourse, { once: true });
+        })
         .catch(function (err) { console.warn('Service worker registration failed:', err); });
     });
   }

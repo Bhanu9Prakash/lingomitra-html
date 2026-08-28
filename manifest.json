@@ -1,12 +1,11 @@
 {
-  "id": "/",
   "name": "LingoMitra — Learn languages by pattern",
   "short_name": "LingoMitra",
   "description": "Seven languages taught through the patterns behind them. Free, offline-capable, no account.",
   "lang": "en",
   "dir": "ltr",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "any",
@@ -15,25 +14,25 @@
   "categories": ["education", "books"],
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-192x192.png",
+      "src": "icons/icon-maskable-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-maskable-512x512.png",
+      "src": "icons/icon-maskable-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -41,28 +40,28 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/narrow-home.png",
+      "src": "screenshots/narrow-home.png",
       "sizes": "780x1688",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Pick one of seven courses"
     },
     {
-      "src": "/screenshots/narrow-lesson.png",
+      "src": "screenshots/narrow-lesson.png",
       "sizes": "780x1688",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "A lesson, with the section index within thumb reach"
     },
     {
-      "src": "/screenshots/narrow-practice.png",
+      "src": "screenshots/narrow-practice.png",
       "sizes": "780x1688",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Build the sentence yourself, then see the answer"
     },
     {
-      "src": "/screenshots/wide-lesson.png",
+      "src": "screenshots/wide-lesson.png",
       "sizes": "2560x1600",
       "type": "image/png",
       "form_factor": "wide",
@@ -74,7 +73,7 @@
       "name": "Continue where I left off",
       "short_name": "Continue",
       "url": "/#/",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

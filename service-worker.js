@@ -1,38 +1,40 @@
 /* LingoMitra service worker.
    App shell is precached and served cache-first (it is versioned by CACHE).
+   Every path here is relative to this file, so the same worker serves the app
+   from a domain root or from a subdirectory without edits.
    Course markdown is served stale-while-revalidate so a lesson you have read
    once opens instantly and offline, but still updates in the background. */
 
-const CACHE = 'lingomitra-v6';
+const CACHE = 'lingomitra-v7';
 
 const SHELL = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js',
-  '/js/motion-fx.js',
-  '/js/content.js',
-  '/js/practice.js',
-  '/js/speech.js',
-  '/js/tutor.js',
-  '/js/coach.js',
-  '/vendor/vue.global.prod.js',
-  '/vendor/marked.umd.js',
-  '/vendor/motion.min.js',
-  '/fonts/inter-latin-opsz-normal.woff2',
-  '/fonts/inter-latin-ext-opsz-normal.woff2',
-  '/mascot.svg',
-  '/favicon.ico',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/icons/apple-touch-icon.png',
-  '/flags/de.svg',
-  '/flags/es.svg',
-  '/flags/fr.svg',
-  '/flags/hi.svg',
-  '/flags/zh.svg',
-  '/flags/jp.svg',
+  './',
+  'index.html',
+  'styles.css',
+  'script.js',
+  'js/motion-fx.js',
+  'js/content.js',
+  'js/practice.js',
+  'js/speech.js',
+  'js/tutor.js',
+  'js/coach.js',
+  'vendor/vue.global.prod.js',
+  'vendor/marked.umd.js',
+  'vendor/motion.min.js',
+  'fonts/inter-latin-opsz-normal.woff2',
+  'fonts/inter-latin-ext-opsz-normal.woff2',
+  'mascot.svg',
+  'favicon.ico',
+  'manifest.json',
+  'icons/icon-192x192.png',
+  'icons/icon-512x512.png',
+  'icons/apple-touch-icon.png',
+  'flags/de.svg',
+  'flags/es.svg',
+  'flags/fr.svg',
+  'flags/hi.svg',
+  'flags/zh.svg',
+  'flags/jp.svg',
   '/flags/kn.svg'
 ];
 
@@ -70,10 +72,10 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
+          caches.open(CACHE).then((cache) => cache.put('index.html', copy));
           return response;
         })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
+        .catch(() => caches.match('index.html').then((r) => r || caches.match('./')))
     );
     return;
   }

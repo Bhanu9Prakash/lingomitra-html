@@ -123,6 +123,14 @@ The app is installable and works offline. Things worth not breaking:
 - **Icons.** A full-bleed icon must never be declared `maskable` — Android crops
   to a circle and clips it. `icon-*.png` are `any`; `icon-maskable-*.png` put the
   same mark at 74% on the brand gradient, inside the safe zone.
+- **Relative paths everywhere.** `index.html`, `manifest.json` and
+  `service-worker.js` reference each other and their assets relatively, so the
+  app installs and works offline from a domain root *and* from a subdirectory.
+  A root-absolute path costs nothing at the root and silently breaks the
+  manifest and worker registration at a subpath, which is the harder case to
+  notice. `manifest.json` therefore carries no `id`: `id` resolves against the
+  origin rather than the manifest URL, so a relative one is not the fix —
+  omitting it defaults the identity to `start_url`, which is right either way.
 - **Screenshots** in the manifest are what make Chrome on Android show its
   richer install dialog, so they are part of setup, not marketing. Regenerate
   them after visible UI changes with `node tools/make-screenshots.js`.
