@@ -20,6 +20,28 @@
 
   var STORE_THEME = 'lm.theme';
   var STORE_PROGRESS = 'lm.progress';
+  var STORE_SECOND = 'lm.second-opinion';
+
+  /* The settings form is a draft of the saved tutor config: edits only take
+     effect once the connection test has actually reached a model. With nothing
+     saved it opens on the first local preset, so the recommended path — a model
+     on your own machine — is the one already filled in. */
+  function formFrom(config) {
+    if (!config.provider) {
+      var seed = window.tutor.PRESETS[0];
+      return {
+        preset: seed.id, provider: seed.provider, baseUrl: seed.baseUrl,
+        model: seed.model, key: seed.key
+      };
+    }
+    return {
+      preset: config.preset || '',
+      provider: config.provider || '',
+      baseUrl: config.baseUrl || '',
+      model: config.model || '',
+      key: config.key || ''
+    };
+  }
 
   /* localStorage can throw in private modes — never let that break the app. */
   var store = {
@@ -119,6 +141,19 @@
         canListen: false,
         cloudSpeech: true,
 
+        /* Conversation */
+        talkTurns: [],
+        talkInput: '',
+        talkBusy: false,
+        talkError: '',
+        scenario: '',
+        tutorState: window.tutor.status(),
+        form: formFrom(window.tutor.config()),
+        tutorTest: { state: '', title: '', body: '' },
+        tutorPresets: window.tutor.PRESETS,
+        secondOpinion: store.get(STORE_SECOND, true) !== false,
+        second: { state: '', acceptable: false, why: '', from: '' },
+
         progress: store.get(STORE_PROGRESS, {}),
         itemsByLesson: {}
       };
@@ -203,6 +238,31 @@
       },
       speechTag: function () {
         return this.language ? window.speech.tagFor(this.language.code) : 'en';
+      },
+
+      /* ── Conversation ────────────────────────────────────────────────
+         The ceiling is the lesson you are on, or the furthest you have opened
+         when you arrive at the conversation from somewhere else. */
+      talkUpTo: function () {
+        return this.currentLesson ? (this.currentLesson.number || 1) : this.furthestLesson();
+      },
+      talkScenarios: function () {
+        return window.coach.scenariosFor(this.talkUpTo);
+      },
+      anthropicModels: function () {
+        return window.tutor.PROVIDERS.anthropic.models;
+      },
+      /* A second opinion only makes sense where the checker withheld judgement,
+         and only where the model can be trusted to have the language at all —
+         Kannada is asked of no model here. */
+      canAskSecond: function () {
+        return this.secondOpinion &&
+          this.tutorState.ready &&
+          !!this.verdict &&
+          this.verdict.status !== 'correct' &&
+          this.verdict.result !== 'revealed' &&
+          !!this.attempt.trim() &&
+          this.language && this.language.code !== 'kannada';
       },
       verdictHeadline: function () {
         if (!this.verdict) return '';
@@ -391,6 +451,18 @@
       /* ── Routing: #/<language>/<lesson-number|intro> ─────────────────── */
       readRoute: function () {
         var parts = (location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);
+
+        /* Settings sit outside a course: they are reachable from anywhere and
+           keep whatever language is already loaded behind them. */
+        if (parts[0] === 'settings') {
+          this.closeOverlays();
+          this.stopListening();
+          this.view = 'settings';
+          this.form = formFrom(window.tutor.config());
+          this.tutorState = window.tutor.status();
+          return;
+        }
+
         var lang = parts[0] ? findLanguage(parts[0]) : null;
 
         if (!lang) {
@@ -400,8 +472,11 @@
           return;
         }
 
-        var practising = parts[parts.length - 1] === 'practice';
-        if (practising) parts = parts.slice(0, -1);
+        var tail = parts[parts.length - 1];
+        var mode = (tail === 'practice' || tail === 'talk') ? tail : '';
+        var practising = mode === 'practice';
+        var talking = mode === 'talk';
+        if (mode) parts = parts.slice(0, -1);
 
         var wantId = parts[1]
           ? (parts[1] === 'intro' ? lang.code + '-intro' : lang.code + '-lesson-' + parts[1])
@@ -409,16 +484,43 @@
 
         if (this.language && this.language.code === lang.code && this.lessons.length) {
           if (wantId && wantId !== this.lessonId) this.showLesson(wantId);
-          this.view = practising ? 'practice' : 'lesson';
+          this.view = mode || 'lesson';
           if (practising && !this.practiceSet.length) this.resumePracticeRoute();
-          if (!practising) this.stopListening();
+          if (talking) this.enterTalk();
+          if (!mode) this.stopListening();
           return;
         }
 
         this.language = lang;
-        this.view = practising ? 'practice' : 'lesson';
-        this.pendingPractice = practising;
+        this.view = mode || 'lesson';
+        this.pendingMode = mode;
         this.loadCourse(lang, wantId);
+      },
+
+      /* A /talk URL opened cold still needs the voice probe and a fresh read of
+         whichever model the learner set up. */
+      enterTalk: function () {
+        this.tutorState = window.tutor.status();
+        this.talkError = '';
+        /* A conversation is pinned to the ceiling it started under. Coming back
+           from a later lesson would leave the header promising lessons 1..N
+           while the model is still working from the old digest, so start over
+           rather than quietly disagreeing with the screen. */
+        if (this.talkTurns.length && this._talkCeiling !== this.talkUpTo) {
+          this.talkTurns = [];
+          this.scenario = '';
+        }
+        this.probeVoice();
+        this.scrollTalk();
+      },
+
+      /* showLesson() sets the view to 'lesson'; if the URL asked for practice or
+         a conversation, put that back once the course is in hand. */
+      resumeMode: function () {
+        var mode = this.pendingMode;
+        this.pendingMode = '';
+        if (mode === 'practice') { this.view = 'practice'; this.resumePracticeRoute(); }
+        else if (mode === 'talk') { this.view = 'talk'; this.enterTalk(); }
       },
 
       /* A /practice URL opened cold (a share, a refresh, a back button) needs a
@@ -508,11 +610,7 @@
           this.lessons = courseCache[lang.code];
           this.itemsByLesson = this.buildItems(lang, this.lessons);
           this.showLesson(wantId || this.lessons[0].id);
-          if (this.pendingPractice) {
-            this.pendingPractice = false;
-            this.view = 'practice';
-            this.resumePracticeRoute();
-          }
+          this.resumeMode();
           return;
         }
 
@@ -537,11 +635,7 @@
                the table affordances, which need the article in the DOM. */
             self.loading = false;
             self.showLesson(wantId || lessons[0].id);
-            if (self.pendingPractice) {
-              self.pendingPractice = false;
-              self.view = 'practice';
-              self.resumePracticeRoute();
-            }
+            self.resumeMode();
           })
           .catch(function (err) {
             self.error = true;
@@ -633,10 +727,291 @@
         this.navigate(back);
       },
 
+      /* ── Conversation ────────────────────────────────────────────────
+         The model is a conversation partner, never a teacher: js/coach.js
+         builds a system prompt from the lessons already covered and this only
+         moves turns in and out of it. */
+      openTalk: function () {
+        if (!this.language) return;
+        this.closeOverlays();
+        window.speech.cancel();
+        this.returnTo = location.hash;
+        this.navigate(this.routeFor(this.language.code, this.lessonId) + '/talk');
+      },
+
+      exitTalk: function () {
+        this.abortTalk();
+        this.stopListening();
+        window.speech.cancel();
+        var back = this.returnTo || this.routeFor(this.language.code, this.lessonId);
+        this.returnTo = '';
+        this.navigate(back);
+      },
+
+      beginTalk: function (scenario) {
+        if (!this.tutorState.ready || !this.language || !this.lessons.length) return;
+        this.scenario = scenario.id;
+        this.talkError = '';
+        this.talkTurns = [];
+
+        /* Built once and held for the session: the ceiling should not move
+           under the learner halfway through a conversation. */
+        this._talkCeiling = this.talkUpTo;
+        this._talkSystem = window.coach.conversationPrompt({
+          lessons: this.lessons,
+          itemsByLesson: this.itemsByLesson,
+          upTo: this.talkUpTo,
+          languageName: this.language.name,
+          scenario: scenario.brief
+        });
+
+        this.streamTurn([{ role: 'user', content: 'Start the conversation.' }]);
+      },
+
+      sendTurn: function () {
+        var said = this.talkInput.trim();
+        if (!said || this.talkBusy) return;
+        this.stopListening();
+        window.speech.cancel();
+        this.talkInput = '';
+        this.talkError = '';
+        this.talkTurns.push({ role: 'user', text: said });
+        this.streamTurn(this.talkHistory());
+        this.scrollTalk();
+      },
+
+      /* What the model said, gloss included — it is the model's own turn and
+         trimming it would make the history disagree with the screen. */
+      talkHistory: function () {
+        return this.talkTurns
+          .filter(function (t) { return t.text; })
+          .map(function (t) {
+            return { role: t.role === 'user' ? 'user' : 'assistant', content: t.text };
+          });
+      },
+
+      streamTurn: function (messages) {
+        var self = this;
+        var turn = { role: 'assistant', text: '' };
+        this.talkTurns.push(turn);
+        this.talkBusy = true;
+
+        this.abortTalk();
+        this._talkAbort = typeof AbortController === 'function' ? new AbortController() : null;
+
+        window.tutor.chat({
+          system: this._talkSystem,
+          messages: messages,
+          maxTokens: 300,
+          signal: this._talkAbort ? this._talkAbort.signal : undefined,
+          onDelta: function () { self.scrollTalk(); }
+        }).then(function (text) {
+          turn.text = String(text || '').trim();
+          self.talkBusy = false;
+          self._talkAbort = null;
+          if (!turn.text) {
+            self.talkTurns.pop();
+            self.talkError = 'It returned nothing. Try again, or pick a different model.';
+            return;
+          }
+          self.scrollTalk();
+          /* Hearing it is half the point of a conversation. */
+          if (self.voice.ok) self.hear(self.said(turn.text));
+        }).catch(function (err) {
+          self.talkBusy = false;
+          self._talkAbort = null;
+          if (err && err.name === 'AbortError') { self.talkTurns.pop(); return; }
+          if (!turn.text) self.talkTurns.pop();
+          self.talkError = (err && err.message) || 'Something went wrong reaching the model.';
+        });
+      },
+
+      abortTalk: function () {
+        if (this._talkAbort) { try { this._talkAbort.abort(); } catch (e) { /* ignore */ } }
+        this._talkAbort = null;
+      },
+
+      /* The prompt asks for the target language first and an English gloss in
+         brackets. Split them so the bracket does not compete with the sentence
+         the learner is meant to read. */
+      said: function (text) {
+        var full = String(text || '').trim();
+        var stripped = full.replace(/\s*[[(][^\])]*[\])]\s*$/, '').trim();
+        return stripped || full;
+      },
+
+      gloss: function (text) {
+        var full = String(text || '').trim();
+        if (this.said(text) === full) return '';
+        var m = full.match(/[[(]([^\])]*)[\])]\s*$/);
+        return m ? m[1].trim() : '';
+      },
+
+      scrollTalk: function () {
+        var self = this;
+        this.$nextTick(function () {
+          var el = self.$refs.talkScroll;
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      },
+
+      toggleTalkListen: function () {
+        if (this.listening) { this.stopListening(); return; }
+        if (!this.canListen || !this.language) return;
+
+        var self = this;
+        window.speech.cancel();
+        this.heard = '';
+        this.listening = true;
+
+        this._stopListen = window.speech.listen(this.language.code, {
+          oninterim: function (text) { self.heard = text; },
+          onfinal: function (text) { self.talkInput = text; self.heard = text; },
+          onend: function (gotResult) {
+            self.listening = false;
+            self._stopListen = null;
+            /* Speaking a sentence is the whole gesture: send it rather than
+               making the learner reach for a second button. */
+            if (gotResult) self.$nextTick(function () { self.sendTurn(); });
+          },
+          onerror: function () { self.listening = false; }
+        });
+      },
+
+      /* ── Second opinion ──────────────────────────────────────────────
+         Asked only when the deterministic checker withheld judgement. The model
+         is given both sentences, so it compares rather than translates. */
+      askSecond: function () {
+        if (!this.canAskSecond || this.second.state === 'busy') return;
+        var self = this;
+        var item = this.currentItem;
+        var attempt = this.attempt;
+        this.second = { state: 'busy', acceptable: false, why: '', from: '' };
+
+        window.tutor.chat({
+          system: 'You judge one sentence. Answer in the two lines asked for and nothing else.',
+          messages: [{
+            role: 'user',
+            content: window.coach.verdictPrompt({
+              languageName: this.language.name,
+              prompt: item.prompt,
+              answer: item.answer,
+              attempt: attempt
+            })
+          }],
+          maxTokens: 160
+        }).then(function (text) {
+          var read = window.coach.readVerdict(text);
+          self.second = {
+            state: 'done',
+            acceptable: read.acceptable,
+            why: read.why || (read.acceptable
+              ? 'It says the same thing.'
+              : 'Compare it with the course\u2019s sentence.'),
+            from: window.tutor.isLocal() ? 'From the model on this machine' : 'From ' + window.tutor.model()
+          };
+        }).catch(function (err) {
+          self.second = {
+            state: 'done',
+            acceptable: false,
+            why: (err && err.message) || 'The model could not be reached.',
+            from: 'No answer'
+          };
+        });
+      },
+
+      /* ── Tutor settings ──────────────────────────────────────────────── */
+      openSettings: function () {
+        this.closeOverlays();
+        this.abortTalk();
+        this.stopListening();
+        window.speech.cancel();
+        if (!this.settingsFrom) this.settingsFrom = location.hash;
+        this.navigate('#/settings');
+      },
+
+      doneSettings: function () {
+        var back = this.settingsFrom || '#/';
+        this.settingsFrom = '';
+        this.tutorTest = { state: '', title: '', body: '' };
+        this.tutorState = window.tutor.status();
+        this.navigate(back === '#/settings' ? '#/' : back);
+      },
+
+      applyPreset: function (preset) {
+        this.form.preset = preset.id;
+        this.form.provider = preset.provider;
+        if (preset.provider === 'anthropic') {
+          this.form.baseUrl = '';
+          this.form.model = this.form.model && this.form.model.indexOf('claude') === 0
+            ? this.form.model
+            : window.tutor.PROVIDERS.anthropic.defaultModel;
+          this.form.key = /^sk-ant/.test(this.form.key) ? this.form.key : '';
+        } else {
+          this.form.baseUrl = preset.baseUrl;
+          this.form.model = preset.model;
+          this.form.key = preset.key;
+        }
+        this.tutorTest = { state: '', title: '', body: '' };
+      },
+
+      testTutor: function () {
+        var self = this;
+        if (!this.form.provider) {
+          this.tutorTest = { state: 'bad', title: 'Pick a partner first', body: 'Choose one of the options above.' };
+          return;
+        }
+        window.tutor.save(this.form);
+        this.tutorState = window.tutor.status();
+
+        if (!this.tutorState.ready) {
+          this.tutorTest = {
+            state: 'bad',
+            title: this.tutorState.reason === 'no-key' ? 'That one needs a key' : 'Something is missing',
+            body: this.tutorState.reason === 'no-key'
+              ? 'Claude is a hosted model, so it needs your API key.'
+              : 'Fill in the endpoint your runtime serves.'
+          };
+          return;
+        }
+
+        this.tutorTest = { state: 'busy', title: 'Trying it', body: 'One short message, to check it answers.' };
+        window.tutor.test().then(function () {
+          self.tutorState = window.tutor.status();
+          self.tutorTest = {
+            state: 'ok',
+            title: 'It answered',
+            body: window.tutor.isLocal()
+              ? 'Running on this machine \u2014 nothing you say leaves the device.'
+              : 'Ready. Requests go straight from this page to the provider.'
+          };
+        }).catch(function (err) {
+          self.tutorTest = {
+            state: 'bad',
+            title: 'No answer',
+            body: (err && err.message) || 'Could not reach it. If the model is local, check it is running.'
+          };
+        });
+      },
+
+      forgetTutor: function () {
+        window.tutor.forget();
+        this.form = formFrom(window.tutor.config());
+        this.tutorState = window.tutor.status();
+        this.talkTurns = [];
+        this.second = { state: '', acceptable: false, why: '', from: '' };
+        this.tutorTest = { state: 'ok', title: 'Forgotten', body: 'The key and endpoint are gone from this browser.' };
+      },
+
+      saveSecondOpinion: function () {
+        store.set(STORE_SECOND, this.secondOpinion);
+      },
+
       resetAttempt: function () {
         this.attempt = '';
         this.verdict = null;
         this.heard = '';
+        this.second = { state: '', acceptable: false, why: '', from: '' };
         var self = this;
         this.$nextTick(function () {
           if (self.$refs.answerInput) self.$refs.answerInput.focus();
@@ -959,6 +1334,8 @@
           if (this.langMenuOpen) { this.langMenuOpen = false; return; }
           if (this.listening) { this.stopListening(); return; }
           if (this.view === 'practice') { e.preventDefault(); this.exitPractice(); return; }
+          if (this.view === 'talk') { e.preventDefault(); this.exitTalk(); return; }
+          if (this.view === 'settings') { e.preventDefault(); this.doneSettings(); return; }
         }
 
         if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -1004,9 +1381,27 @@
   app.mount('#app');
 
   /* ── Service worker ─────────────────────────────────────────────────── */
+
+  /* On a first visit the course is fetched before the worker takes control, so
+     it lands in the browser's HTTP cache but not in ours — and "open a course
+     once and it stays readable offline" would quietly mean "twice". Re-request
+     it the moment control arrives: the worker sees it and stores it, while the
+     browser serves it from its own cache rather than downloading again. */
+  function warmCourse() {
+    var code = (location.hash || '').replace(/^#\/?/, '').split('/')[0];
+    if (findLanguage(code)) fetch('./courses/' + code + '-lesson.md').catch(function () { });
+  }
+
   if (navigator.serviceWorker) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      /* Relative, so the app also works when it is served from a subdirectory
+         rather than a domain root. The default scope is the worker's own
+         directory, which is exactly the app root either way. */
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function () {
+          if (navigator.serviceWorker.controller) return;
+          navigator.serviceWorker.addEventListener('controllerchange', warmCourse, { once: true });
+        })
         .catch(function (err) { console.warn('Service worker registration failed:', err); });
     });
   }

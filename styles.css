@@ -1809,6 +1809,295 @@ a:hover { text-decoration: underline; }
   .summary__stats { gap: 20px; }
 }
 
+/* ── 17c. Conversation ────────────────────────────────────────────────────
+   Speak-style voice-first practice, held inside the Thinking Method: the tutor
+   converses but never teaches ahead of the course (see js/coach.js). Composer
+   from Kokonut UI · ai-prompt; voice states from Watermelon UI ·
+   voice-chat-disclosure; the round transport control from · contextual-ai-bar. */
+
+.talk {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h) - env(safe-area-inset-top));
+  padding: 0 var(--gutter);
+}
+
+.talk__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0 12px;
+  flex-shrink: 0;
+}
+.talk__head .badge { margin-left: auto; }
+
+.talk__scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* Once there are turns, sit them on the composer rather than stranding three
+   bubbles at the top of a tall screen. `margin-top: auto` on the first child
+   rather than `justify-content: flex-end`, which clips the top of an
+   overflowing scroller. */
+.talk__scroll--live > :first-child { margin-top: auto; }
+
+/* A turn. The tutor sits left with the mascot; the learner right. */
+.turn { display: flex; gap: 10px; align-items: flex-end; max-width: 88%; }
+.turn--you { align-self: flex-end; flex-direction: row-reverse; }
+.turn__who {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+}
+.turn__who img { width: 22px; height: 22px; }
+
+.turn__bubble {
+  position: relative;
+  padding: 11px 14px;
+  border-radius: var(--r-lg);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  overflow-wrap: anywhere;
+}
+.turn--you .turn__bubble {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+}
+.turn__gloss {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--fg-subtle);
+}
+.turn__replay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 7px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--fg-subtle);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.turn__replay svg { width: 13px; height: 13px; }
+.turn__replay:hover { color: var(--accent-text); border-color: var(--accent-line); }
+
+/* Kokonut UI · ai-loading — the tutor is composing */
+.thinking-dots { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
+.thinking-dots i {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+  animation: dot 1.2s ease-in-out infinite;
+}
+.thinking-dots i:nth-child(2) { animation-delay: 0.15s; }
+.thinking-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Composer — Kokonut UI · ai-prompt */
+.composer {
+  flex-shrink: 0;
+  padding: 8px;
+  margin-bottom: calc(14px + env(safe-area-inset-bottom));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface-1);
+  transition: border-color var(--dur) var(--ease);
+}
+.composer:focus-within { border-color: var(--accent); }
+.composer__row { display: flex; align-items: center; gap: 8px; }
+.composer input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 8px;
+  /* 16px minimum, or iOS zooms the page on focus. */
+  font-size: 1.0625rem;
+  outline: none;
+}
+.composer input::placeholder { color: var(--fg-faint); }
+.composer__send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  background: var(--primary);
+  color: var(--on-primary);
+  transition: background-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease), opacity var(--dur) var(--ease);
+}
+.composer__send svg { width: 18px; height: 18px; }
+.composer__send:hover { background: var(--primary-hover); }
+.composer__send:active { transform: scale(0.94); }
+.composer__send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* The primary voice control — Watermelon UI · voice-chat-disclosure */
+.mic-big {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg-muted);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.mic-big svg { width: 19px; height: 19px; }
+.mic-big:hover { color: var(--fg); border-color: var(--border-loud); }
+.mic-big:active { transform: scale(0.94); }
+.mic-big[data-listening='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fbfbfe;
+}
+.mic-big:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.composer__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 2px;
+  font-size: 0.75rem;
+  color: var(--fg-faint);
+}
+.composer__hint .wave { color: var(--accent-text); }
+
+/* Scenario picker */
+.scenarios { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.scenario {
+  min-height: 44px;
+  padding: 9px 15px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.scenario:hover { border-color: var(--accent-line); background: var(--surface-2); }
+.scenario[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ── 17d. Tutor settings ─────────────────────────────────────────────────── */
+
+.setup { width: 100%; max-width: 560px; margin: 0 auto; padding: 28px var(--gutter) 96px; }
+.setup__section { margin-top: 30px; }
+.setup__section > .t-micro { margin-bottom: 12px; display: block; }
+
+.field { margin-top: 16px; }
+.field > label { display: block; font-size: 0.875rem; font-weight: 550; margin-bottom: 6px; }
+.field__hint { font-size: 0.8125rem; color: var(--fg-subtle); margin-top: 6px; line-height: 1.5; }
+.field input,
+.field select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.field select { appearance: none; cursor: pointer; padding-right: 34px; }
+.field__select { position: relative; }
+.field__select > svg {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 15px; height: 15px;
+  pointer-events: none;
+  color: var(--fg-faint);
+}
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67, 59, 255, 0.22);
+}
+.field input[type='password'] { font-family: var(--font-mono); letter-spacing: 0.06em; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.notice {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 4px 12px;
+  align-items: start;
+  padding: 13px 15px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin-top: 18px;
+}
+.notice > svg { width: 18px; height: 18px; transform: translateY(2px); color: var(--fg-subtle); }
+.notice b { grid-column: 2; font-weight: 550; }
+.notice p { grid-column: 2; color: var(--fg-muted); }
+.notice--good { background: var(--success-wash); border-color: var(--success-line); }
+.notice--good > svg { color: var(--success); }
+.notice--bad { background: var(--danger-wash); border-color: var(--danger-line); }
+.notice--bad > svg { color: var(--danger); }
+.notice--accent { background: var(--accent-wash); border-color: var(--accent-line); }
+.notice--accent > svg { color: var(--accent-text); }
+
+/* Second opinion inside practice */
+.second {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 4px 10px;
+  align-items: start;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-strong);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.second > svg { width: 16px; height: 16px; transform: translateY(2px); color: var(--fg-subtle); }
+.second b { grid-column: 2; font-weight: 550; }
+.second p { grid-column: 2; color: var(--fg-muted); }
+.second--ok { border-color: var(--success-line); background: var(--success-wash); }
+.second--ok > svg, .second--ok b { color: var(--success); }
+.second__from { grid-column: 2; font-size: 0.75rem; color: var(--fg-faint); margin-top: 3px; }
+
+@media (max-width: 860px) {
+  .talk { padding: 0 16px; }
+  .turn { max-width: 92%; }
+  .turn__bubble { font-size: 1rem; }
+  .setup { padding: 20px 16px 80px; }
+}
+
 /* ── 18. Footer ──────────────────────────────────────────────────────────── */
 
 .footer {
@@ -1877,6 +2166,7 @@ a:hover { text-decoration: underline; }
   .hear svg { width: 17px; height: 17px; }
   .mic { width: 46px; height: 46px; }
   .brand { padding: 9px 0; }
+  .btn { height: 44px; }
   .btn--sm { height: 44px; padding: 0 16px; }
   .resume__go { width: 40px; height: 40px; }
   .island__bar { height: 56px; }
