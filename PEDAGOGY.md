@@ -102,11 +102,11 @@ because a fair one is not available.
 system, so coverage varies. Where there is no voice for a language, the UI says
 so instead of showing a button that does nothing.
 
-## What this means for the on-device model layer
+## What this means for the model layer
 
 The model is not the teacher. The course is the teacher, and it already works.
-When the model layer is built it gets the jobs the checker cannot do, under the
-same constraints:
+The model layer gets the jobs the checker cannot do, under these constraints —
+enforced in code, in `js/coach.js`, rather than left to the model's discretion:
 
 - **It may adjudicate, not author.** Its question is "does this attempt say the
   same thing as this reference?" — a comparison with a known-good answer in the
@@ -121,6 +121,46 @@ same constraints:
 - **Kannada gets no model feedback.** No small local model handles it reliably,
   and confident nonsense aimed at Kannada learners would make the product worse
   than it is today.
+
+## How that layer is actually built
+
+Two files, split so that the pedagogy cannot be traded away for convenience:
+
+**`js/tutor.js` — transport.** Provider-agnostic and deliberately dumb: it moves
+messages and decides nothing about teaching. It speaks two wire formats, the
+Anthropic Messages API and the OpenAI-compatible one — the latter covering
+OpenAI, OpenRouter, Groq and, more to the point, **Ollama** (`localhost:11434/v1`)
+and **LM Studio** (`localhost:1234/v1`).
+
+That is the honest answer to "run a local LLM". WebLLM would put a 1–3 GB
+download inside the browser, on a mobile-first audience, for a model weaker than
+the one a laptop can already serve over loopback. Pointing at a local runtime
+gets a better model, no download, and nothing leaving the device. Where a learner
+has no local runtime, their own API key is the fallback — held in their browser,
+sent only to the provider they picked.
+
+**`js/coach.js` — pedagogy.** Pure string-building, no state, no network. It
+reads the same authored practice items the checker uses and turns lessons 1..N
+into a syllabus digest: the lesson titles, and the sentences the course actually
+asked the learner to build. That digest is the ceiling, and it is a fact drawn
+from the course rather than a guess about what the learner knows.
+
+The conversation prompt then states six hard rules — stay inside the digest,
+never introduce grammar, never hand over the answer, target language first with
+a short gloss, two sentences maximum, model the correction rather than announce
+it. `tools/coach-test.js` asserts the ones that can be asserted mechanically:
+that a lesson-3 prompt contains no lesson-12 material, and that the prompt stays
+bounded (under 12,000 characters) on the longest course.
+
+The second opinion is a narrower job on purpose. The model is handed the task,
+the course's answer *and* the learner's attempt, and asked only whether they say
+the same thing. A comparison against a known-good reference is a task a small
+local model can do; open-ended translation is not. It returns two lines, and a
+reply that does not parse never reads as acceptable.
+
+**What is deliberately absent.** No score, no streak, no "level", no daily goal.
+Language Transfer's objection to conditioning is not decoration, and a
+conversation partner that grades you is a different product.
 
 ## Device reality (measured, not assumed)
 
@@ -142,8 +182,8 @@ which case the user is in.
 audio goes to a Google service. In a product whose selling point is that it works
 offline that is worth stating, so the UI labels it while listening.
 
-**Models**, for whenever that layer lands: WebLLM needs WebGPU, which rules out
-most phones today. In its prebuilt list the plausible sizes are Llama-3.2-1B
+**Models.** The reason the conversation tier talks to a local *runtime* rather
+than downloading weights: WebLLM needs WebGPU, which rules out most phones today. In its prebuilt list the plausible sizes are Llama-3.2-1B
 (~0.9 GB), Qwen3-1.7B (~2.0 GB), Llama-3.2-3B (~2.3 GB) and Qwen3-4B (~3.4 GB).
 Llama 3.2 covers German, French, Hindi and Spanish officially; Qwen is stronger
 on Chinese. None covers Kannada. On a mobile-first, bandwidth-conscious audience
