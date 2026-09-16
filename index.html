@@ -36,7 +36,7 @@
   <!-- Typeface: Inter Variable, self-hosted (Realtime Colors design system) -->
   <link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
 
   <!-- Paint the stored theme before first paint to avoid a flash -->
   <script>
@@ -349,41 +349,61 @@
           </svg>
 
           <div class="shell home__grid">
-            <div class="home__intro">
-              <p class="t-micro home__eyebrow">{{ languages.length }} languages · pattern-first</p>
-              <h1 class="t-display home__title text-effect" data-pending ref="heroTitle">Languages have patterns. We
-                teach those.</h1>
-              <p class="home__lede">Every lesson starts from the rule underneath — how verbs bend, how word order
-                shifts, why a sound changes. Free, works offline, no account.</p>
-
-              <button class="resume" v-if="resume" @click="openResume">
-                <img class="flag flag--lg" :src="'flags/' + resume.lang.flagCode + '.svg'" alt="" width="30"
-                  height="30">
-                <span class="resume__body">
-                  <span class="resume__title">{{ resume.title }}</span>
-                  <span class="resume__meta">Continue {{ resume.lang.name }} · lesson {{ resume.number }}</span>
-                </span>
-                <span class="resume__go"><svg><use href="#i-arrow-right" /></svg></span>
-              </button>
-            </div>
-
-            <div class="picker">
-              <div class="picker__head">
-                <h2 class="t-micro">Pick a language</h2>
-                <p class="t-micro">{{ languages.length }} courses</p>
+            <div class="home__hero">
+              <div class="home__intro">
+                <p class="t-micro home__eyebrow">Learn through patterns</p>
+                <h1 class="home__title">Find your next language.</h1>
+                <p class="home__lede">Understand the patterns. Build your own sentences.
+                  Explore {{ languages.length }} courses, at your own pace.</p>
               </div>
 
-              <label class="field course-search">
-                <span class="sr-only">Find a language</span>
-                <input type="search" v-model="courseQuery" placeholder="Find a language" autocomplete="off">
-              </label>
-              <p class="course-status">27 new foundation drafts. Fluent-speaker review pending.</p>
-              <div class="lang-grid" ref="langGrid">
+              <aside class="home__return" v-if="resume" aria-label="Continue learning">
+                <p class="t-micro">Continue learning</p>
+                <button class="resume" @click="openResume">
+                  <img class="flag flag--lg" :src="'flags/' + resume.lang.flagCode + '.svg'" alt="" width="30" height="30">
+                  <span class="resume__body">
+                    <span class="resume__title">{{ resume.lang.name }}</span>
+                    <span class="resume__meta">{{ resume.number ? 'Lesson ' + resume.number : 'Introduction' }} · {{ resume.title }}</span>
+                  </span>
+                  <span class="resume__go" aria-hidden="true"><svg><use href="#i-arrow-right" /></svg></span>
+                </button>
+              </aside>
+            </div>
+
+            <section class="picker" aria-labelledby="catalogue-title">
+              <div class="picker__head">
+                <h2 id="catalogue-title">Explore languages</h2>
+                <label class="field course-search">
+                  <span class="sr-only">Find a language</span>
+                  <svg aria-hidden="true"><use href="#i-search" /></svg>
+                  <input type="search" v-model="courseQuery" ref="courseSearch"
+                    placeholder="Search by name or native script" autocomplete="off" dir="auto" aria-controls="course-results">
+                </label>
+              </div>
+
+              <div class="picker__controls">
+                <div class="course-filters" role="group" aria-label="Filter languages">
+                  <button v-for="filter in courseFilters" :key="filter.code" class="scenario course-filter"
+                    :data-course-filter="filter.code" :aria-pressed="courseFilter === filter.code ? 'true' : 'false'"
+                    aria-controls="course-results" @click="courseFilter = filter.code">
+                    {{ filter.label }} <span class="course-filter__count">{{ filter.count }}</span>
+                  </button>
+                </div>
+                <p class="picker__count" role="status" aria-live="polite" aria-atomic="true">
+                  {{ filteredLanguages.length }} {{ filteredLanguages.length === 1 ? 'language' : 'languages' }}
+                </p>
+              </div>
+
+              <div class="lang-grid" id="course-results" role="group" aria-label="Language courses">
                 <button v-for="lang in filteredLanguages" :key="lang.code" class="lang-card" @click="selectLanguage(lang)">
-                  <img class="flag flag--lg" :src="'flags/' + lang.flagCode + '.svg'" alt="" width="30" height="30">
+                  <img class="flag" :src="'flags/' + lang.flagCode + '.svg'" alt="" width="24" height="24">
                   <span class="lang-card__body">
-                    <span class="lang-card__name">{{ lang.name }}</span>
-                    <span class="lang-card__native"><bdi :lang="lang.tags[0]">{{ lang.nativeName }}</bdi><span v-if="lang.reviewStatus === 'draft'"> · Draft<span v-if="lang.courseFormat === 'romanised'"> · Romanised</span></span></span>
+                    <span class="lang-card__heading">
+                      <span class="lang-card__name">{{ lang.name }}</span>
+                      <span class="lang-card__status" v-if="lang.reviewStatus === 'draft'">Draft</span>
+                    </span>
+                    <span class="lang-card__native"><bdi :lang="lang.tags[0]">{{ lang.nativeName }}</bdi></span>
+                    <span class="lang-card__format" v-if="lang.courseFormat === 'romanised'">Roman transcription</span>
                   </span>
                   <svg class="lang-card__go" aria-hidden="true"><use href="#i-arrow-right" /></svg>
                   <span class="lang-card__meter" v-if="progressFor(lang.code) > 0"
@@ -391,8 +411,14 @@
                     :aria-label="progressFor(lang.code) + '% complete'"></span>
                 </button>
               </div>
-              <p class="course-status" v-if="!filteredLanguages.length" role="status">No matching language. Try another name.</p>
-            </div>
+              <div class="catalogue-empty" v-if="!filteredLanguages.length">
+                <h3>{{ courseFilter === 'started' && !courseQuery.trim() ? 'No courses started yet' : 'No matching language' }}</h3>
+                <p>{{ courseFilter === 'started' && !courseQuery.trim() ? 'Open a course and it will appear here, with your place saved.' : 'Try another name or clear your filters to browse the full catalogue.' }}</p>
+                <button class="btn btn--outline btn--sm" @click="resetCourseFilters">Browse all languages</button>
+              </div>
+              <p class="catalogue-note">{{ draftCourseCount }} courses are new foundation drafts. Fluent-speaker review is pending.
+                Courses marked “Roman transcription” have native-script lessons pending.</p>
+            </section>
           </div>
         </section>
       </main>
@@ -1058,7 +1084,7 @@
   <script src="js/tutor.js"></script>
   <script src="js/coach.js?v=8"></script>
   <script src="js/content.js?v=8"></script>
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=9"></script>
 </body>
 
 </html>

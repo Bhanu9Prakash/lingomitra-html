@@ -88,6 +88,7 @@
       return {
         languages: LANGUAGES,
         courseQuery: '',
+        courseFilter: 'all',
         view: 'home',
 
         dark: document.documentElement.classList.contains('theme-dark'),
@@ -153,11 +154,27 @@
     },
 
     computed: {
+      courseFilters: function () {
+        var self = this;
+        return [
+          { code: 'all', label: 'All', count: this.languages.length },
+          { code: 'indian', label: 'Indian', count: this.languages.filter(function (l) { return l.group === 'Indian'; }).length },
+          { code: 'international', label: 'International', count: this.languages.filter(function (l) { return l.group === 'International'; }).length },
+          { code: 'started', label: 'Started', count: this.languages.filter(function (l) { return self.hasStartedCourse(l.code); }).length }
+        ];
+      },
+      draftCourseCount: function () {
+        return this.languages.filter(function (lang) { return lang.reviewStatus === 'draft'; }).length;
+      },
       filteredLanguages: function () {
+        var self = this;
         var q = this.courseQuery.trim().toLocaleLowerCase();
         return this.languages.filter(function (lang) {
+          if (self.courseFilter === 'indian' && lang.group !== 'Indian') return false;
+          if (self.courseFilter === 'international' && lang.group !== 'International') return false;
+          if (self.courseFilter === 'started' && !self.hasStartedCourse(lang.code)) return false;
           return !q || (lang.name + ' ' + lang.nativeName + ' ' + lang.code + ' ' + lang.group).toLocaleLowerCase().indexOf(q) >= 0;
-        });
+        }).sort(function (a, b) { return a.name.localeCompare(b.name, 'en'); });
       },
       currentLesson: function () {
         for (var i = 0; i < this.lessons.length; i++) {
@@ -205,7 +222,7 @@
           lang: lang,
           id: best.last,
           title: best.title || 'Continue where you left off',
-          number: best.number || 1
+          number: /-intro$/.test(best.last) ? 0 : best.number || 1
         };
       },
 
@@ -416,10 +433,8 @@
     },
 
     mounted: function () {
-      var self = this;
       fx.scrollBar(this.$refs.progressBar);
       this.readRoute();
-      this.$nextTick(function () { self.enterHome(); });
     },
 
     beforeUnmount: function () {
@@ -566,6 +581,17 @@
         this.closeOverlays();
         var saved = this.progress[lang.code];
         this.navigate(this.routeFor(lang.code, saved && saved.last));
+      },
+
+      hasStartedCourse: function (code) {
+        return !!(this.progress[code] && this.progress[code].last);
+      },
+
+      resetCourseFilters: function () {
+        this.courseQuery = '';
+        this.courseFilter = 'all';
+        var self = this;
+        this.$nextTick(function () { if (self.$refs.courseSearch) self.$refs.courseSearch.focus(); });
       },
 
       openResume: function () {
@@ -1394,18 +1420,6 @@
         if (this.langMenuOpen && this.$refs.langSwitch && !this.$refs.langSwitch.contains(e.target)) {
           this.langMenuOpen = false;
         }
-      },
-
-      /* ── Entrances (Motion Primitives · in-view) ─────────────────────── */
-      enterHome: function () {
-        if (this.view !== 'home') return;
-        var self = this;
-        this.$nextTick(function () {
-          fx.textEffect(self.$refs.heroTitle, { stagger: 0.045, delay: 0.06 });
-          if (self.$refs.langGrid) {
-            fx.revealGroup(self.$refs.langGrid.children, { stagger: 0.032, immediate: true, delay: 0.12 });
-          }
-        });
       },
 
       scrollTop: function () {

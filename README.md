@@ -28,8 +28,11 @@ historical-source foundation, with contemporary usage review also pending.
 - **Reader:** a lesson rail, section index, dark/light themes and collapsible
   answer keys. English explanations remain left to right while embedded scripts
   set their own direction.
-- **Search:** filter the home catalogue by English name, native name or language
-  code. Cmd/Ctrl K searches the current course and switches languages.
+- **Course catalogue:** browse alphabetically in a three-column desktop layout,
+  two columns on tablets and a single list on phones. Filter All, Indian,
+  International or Started courses, and search by English name, native name or
+  language code. Continue learning reopens your most recent lesson. Cmd/Ctrl K
+  searches the current course and switches languages.
 - **Stable links and progress:** hashes such as `#/german/12` and saved progress
   continue to work. Progress stays in the browser's local storage.
 - **Practice:** construct a sentence, then compare it with the course answer.
@@ -94,8 +97,9 @@ isolation. The report uses the app's actual lesson parser.
 
 For DOM integration checks, install `jsdom` in your development environment and
 run `node tools/dom-test.js` and `node tools/session-test.js`.
-The upgrade regression is `node tools/dom-test.js --upgrade-from-v7`; it requires
-the previous release in Git history. Alternatively set `LM_TEST_JSDOM` to an existing
+The upgrade regressions are `node tools/dom-test.js --upgrade-from-v7` and
+`node tools/dom-test.js --upgrade-from-v8`; they require those releases in Git
+history. Alternatively set `LM_TEST_JSDOM` to an existing
 jsdom package path. These checks execute the real Vue app, local Markdown parser
 and course assets with browser I/O boundaries supplied by JSDOM. They check
 routing, search, answer concealment and progress; they are not visual or actual

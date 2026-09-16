@@ -59,7 +59,9 @@ correctly offline.
 | `.floating-lesson-header` + `.lesson-selection-modal` | `.island` — progress ring, percentage, expandable section index | Watermelon UI · `scroll-island` |
 | (nothing) lesson list was modal-only | `.rail` — persistent lesson rail with completion state | Watermelon UI · `macos-sidebar` |
 | (nothing) no search existed | `.cmd` command palette on ⌘K / Ctrl K / `/` | Watermelon UI · `command-search` |
-| Expanded course picker | Existing `.field` input filters the existing `.lang-card` option list | Reuses the app's Watermelon UI input and option-list adaptations; no new component dependency |
+| Expanded course picker | Full-width alphabetical `.lang-grid`, three columns on desktop, two on tablet and one on phones | Reflows the existing Watermelon UI option-list adaptation; existing palette and Inter |
+| Catalogue controls | Existing `.field` search plus All, Indian, International and Started pressed buttons | Reuses the app's Watermelon UI input and select-ai-agent button adaptations; native button semantics |
+| Return to learning | Existing `.resume` row sits beside the compact introduction and above the catalogue on phones | Reuses the app's progress and button adaptations; saved lesson links stay unchanged |
 | Native-script examples | Native text isolation using `dir="auto"` and `bdi` | Standard HTML bidirectional text semantics; existing reader typography |
 | (nothing) mobile had the same modal | `.sheet` bottom sheet | Watermelon UI · `sheet` |
 | `.theme-toggle` (rotating icon) | `.icon-btn` + `.tip` | Watermelon UI · `button` (icon size), `tooltip` |
@@ -81,7 +83,7 @@ correctly offline.
 | (nothing) no settings screen | `.setup`, `.field`, `.field__select`, `.notice` | Watermelon UI · `input`, `select`, `alert` |
 | (nothing) practice could not defer | `.second` — a dashed second opinion inside the verdict | Watermelon UI · `alert` (dashed variant) |
 | `.hero-image` floating Font Awesome circles | `.backdrop` blurry-gradient SVG | Haikei · blurry gradient |
-| `.hero h2` static headline | `.text-effect` word-by-word reveal | Motion Primitives · `text-effect` (`fade-in-blur`) |
+| Home headline and catalogue entrance | Immediate text and course options, with no stagger across 34 languages | Existing Inter type scale and option-list hover/focus states; motion remains on navigation and disclosure |
 | Font Awesome CDN (~75 KB for 10 icons) | inline SVG sprite in `index.html` | Lucide geometry, as used by every approved source |
 | Nunito | Inter Variable | Realtime Colors |
 

@@ -28,13 +28,14 @@ w.fetch = async url => {
   const file = path.join(root, decodeURIComponent(u.pathname.slice('/lingomitra/'.length)));
   return { ok: fs.existsSync(file), status: fs.existsSync(file) ? 200 : 404, text: async () => fs.readFileSync(file, 'utf8') };
 };
-// A v7 worker served new network-first HTML with its old unversioned shell.
-// Simulate that cache boundary using the real previous release's precache list.
-const upgrading = process.argv.includes('--upgrade-from-v7');
-const previous = '19264f81ff34c668d8649e8fc3f808277b8036fd';
+// Older workers can serve new network-first HTML with their cached shell assets.
+// Simulate that boundary using the actual v7 or v8 precache list.
+const upgrading = process.argv.includes('--upgrade-from-v7') || process.argv.includes('--upgrade-from-v8');
+const previous = process.argv.includes('--upgrade-from-v8')
+  ? '9ab246614205fc2e1c5c45fa37ed7bdd25a79e8d' : '19264f81ff34c668d8649e8fc3f808277b8036fd';
 let cachedPaths = [];
 if (upgrading) {
-  const oldContext = vm.createContext({ self: { addEventListener() {} } });
+  const oldContext = vm.createContext({ self: { registration: { scope: base }, addEventListener() {} }, URL });
   vm.runInContext(execFileSync('git', ['show', previous + ':service-worker.js'], { cwd: root, encoding: 'utf8' }), oldContext);
   cachedPaths = Array.from(vm.runInContext('SHELL', oldContext));
 }
@@ -59,12 +60,39 @@ async function input(el, text) {
   try {
     await settle();
     assert.equal(w.document.querySelectorAll('.lang-card').length, 34);
+    const names = () => [...w.document.querySelectorAll('.lang-card__name')].map(el => el.textContent.trim());
+    assert.deepEqual(names(), names().slice().sort((a, b) => a.localeCompare(b, 'en')), 'Catalogue is not alphabetical');
+    async function filter(code) {
+      const button = w.document.querySelector('[data-course-filter="' + code + '"]');
+      assert.ok(button, 'Missing catalogue filter: ' + code);
+      button.click(); await settle();
+      assert.equal(button.getAttribute('aria-pressed'), 'true');
+    }
+    await filter('indian');
+    assert.equal(names().length, 22);
     await input(w.document.querySelector('.course-search input'), 'తెలుగు');
     assert.equal(w.document.querySelectorAll('.lang-card').length, 1);
     assert.match(w.document.querySelector('.lang-card').textContent, /Telugu/);
     await input(w.document.querySelector('.course-search input'), 'no-such-language');
     assert.match(w.document.body.textContent, /No matching language/);
     await input(w.document.querySelector('.course-search input'), '');
+    await filter('international');
+    assert.equal(names().length, 12);
+    await input(w.document.querySelector('.course-search input'), 'فارسی');
+    assert.deepEqual(names(), ['Persian']);
+    await input(w.document.querySelector('.course-search input'), 'Telugu');
+    assert.equal(names().length, 0);
+    w.document.querySelector('.catalogue-empty button').click(); await settle();
+    assert.equal(names().length, 34);
+    assert.equal(w.document.querySelector('.course-search input').value, '');
+    await filter('started');
+    assert.match(w.document.querySelector('.catalogue-empty').textContent, /No courses started yet/);
+    await go('/persian/intro'); await go('/');
+    assert.deepEqual(names(), ['Persian']);
+    assert.match(w.document.querySelector('.resume__meta').textContent, /Introduction/);
+    w.document.querySelector('.lang-card').click(); await settle();
+    assert.equal(w.location.hash, '#/persian/intro', 'Started course did not reopen its saved place');
+    await go('/'); await filter('all');
 
     const chosen = process.argv.includes('--legacy-only') ? catalogue.slice(0, 7) : catalogue;
     for (const lang of chosen) {
