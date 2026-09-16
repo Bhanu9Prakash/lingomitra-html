@@ -1,110 +1,116 @@
 # LingoMitra
 
-LingoMitra teaches languages through the patterns behind them rather than
-flashcards — how verbs bend, how word order shifts, why a sound changes.
+LingoMitra teaches languages through patterns: how verbs change, how words fit
+together, and how to build a sentence yourself. No account or build step is needed.
 
-Seven courses, ~200 lessons, no account, works offline.
-<https://lingomitra.com/>
+[Website](https://lingomitra.com/) · [Course files](courses/) · [Course review notes](docs/course-review.md)
 
-## Languages
+## Languages and editorial status
 
-German · Spanish · French · Hindi · Chinese · Japanese · Kannada
+The catalogue contains **34 courses, 884 numbered lessons and 4,778 extracted
+practice items**. This expansion adds 27 foundation drafts with 25 lessons each
+(675 lessons and 3,150 practice items) alongside the seven existing courses.
+It covers all 22 scheduled Indian languages plus
+German, Spanish, French, Chinese, Japanese, Persian, Russian, Italian, Arabic,
+Brazilian Portuguese, Korean and Turkish.
+
+**The new courses are original AI-assisted drafts. Fluent-speaker review is
+pending.** Grammar references, the chosen variety, script and romanisation
+conventions are stated in each introduction. Parser checks verify that the app
+can read and practise the content; they do not certify linguistic accuracy or
+proficiency. See the [review notes](docs/course-review.md) for availability and
+any course-format limitations. Bodo, Kashmiri, Manipuri and Santali currently
+use Roman transcription; native-script lessons are pending. Santali is a
+historical-source foundation, with contemporary usage review also pending.
 
 ## What the app does
 
-- **Reader** — a persistent lesson rail, a measure-constrained prose column, and
-  a floating index that tracks reading progress and jumps between sections.
-- **Search** — ⌘K / Ctrl K (or `/`) opens a command palette over every lesson in
-  the current course, and switches language.
-- **Linkable lessons** — `#/german/12` is a real address; the back button works.
-- **Progress** — the lesson you were last on and the ones you've marked read are
-  kept in `localStorage`; the home screen offers to resume.
-- **Practice** — build the lesson's sentences yourself instead of reading them.
-  Type or speak an answer, get a specific read on how it differs from the
-  course's, and hear the sentence spoken. 1,600+ exercises across the seven
-  courses, all authored — nothing is generated. Romanised answers count, so it
-  works on a phone with no Indic or CJK keyboard.
-- **Answer keys stay closed** until you ask for them, so practice exercises are
-  worth attempting.
-- **Conversation** (opt-in) — talk to a partner that is held to the lessons you
-  have actually covered. It will not teach ahead of the course and it will not
-  hand you the answer. Point it at a model running on your own machine through
-  [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) — no
-  download in the browser, nothing leaving the device — or use your own API key
-  for a hosted one. Keys are kept in your browser and sent only to the provider
-  you chose. Everything else in the app works with no model configured.
-- **Keyboard** — ← / → move between lessons, Esc closes any overlay.
-- **Themes** — dark by default, light on request, system preference respected on
-  first visit.
-- **Offline** — the app shell and every course you've opened are cached by the
-  service worker. Open a course once and it stays readable with no connection;
-  one you have never opened says so plainly rather than failing.
-- **Installable** — a real PWA: maskable icons, install screenshots, safe-area
-  handling for notched phones, and 44px touch targets throughout.
-
-## Built with
-
-Vue 3, [marked](https://marked.js.org/) and [Motion](https://motion.dev/), all
-served from `vendor/` — no build step, no CDN on the critical path. Inter is
-self-hosted in `fonts/`.
-
-The interface is composed entirely from an approved set of design sources.
-**Before changing any UI, read [DESIGN.md](DESIGN.md)** — it records the palette,
-the type scale, and which source every component comes from.
-**Before changing anything that responds to a learner, read
-[PEDAGOGY.md](PEDAGOGY.md)** — it records what the Thinking Method is and the
-rules practice follows.
+- **Reader:** a lesson rail, section index, dark/light themes and collapsible
+  answer keys. English explanations remain left to right while embedded scripts
+  set their own direction.
+- **Search:** filter the home catalogue by English name, native name or language
+  code. Cmd/Ctrl K searches the current course and switches languages.
+- **Stable links and progress:** hashes such as `#/german/12` and saved progress
+  continue to work. Progress stays in the browser's local storage.
+- **Practice:** construct a sentence, then compare it with the course answer.
+  Supplied romanisation is accepted. New courses preserve meaningful letters,
+  tone and nasal marks; Turkish casing follows Turkish rules. Russian teaching
+  stress accents may be omitted, as in ordinary spelling. A difference from
+  one reference answer is not proof that a learner's alternative is wrong.
+- **Optional speech:** use device voices where the course format and device
+  support them. Voice input can depend on a remote browser service. Speech is
+  not pronunciation scoring and is not required to read or practise.
+- **Optional conversation:** configure a local model through Ollama or LM Studio,
+  or a hosted provider with your own key. Prompts include the covered course
+  material and ask the model to stay within it. Model output still requires
+  judgment, particularly for draft courses. The rest of the app needs no model.
+- **Offline use:** open a course online once to cache it. Downloaded courses
+  survive app-shell updates. Caches are scoped to this installation so another
+  app's data is not deleted.
+- **Installable PWA:** icons, manifest, touch targets and relative paths support
+  installation from a domain root or a subdirectory.
 
 ## Layout
 
-```
-index.html          page composition + icon sprite
-styles.css          design tokens and the component layer
-script.js           state, hash routing, storage
-js/content.js       markdown → lesson model (pure)
-js/practice.js      exercises → checkable items, and the checker (pure)
-js/speech.js        text-to-speech and voice input (Web Speech API)
-js/tutor.js         model transport — Anthropic + OpenAI-compatible (Ollama, LM Studio)
-js/coach.js         what the model is allowed to say (pure)
-js/motion-fx.js     the animation layer (Motion)
-courses/*.md        lesson content
-icons/ screenshots/ PWA assets (see tools/)
-tools/              checks, and the PWA asset generators
-vendor/             Vue, marked, Motion
-fonts/              Inter Variable
-```
+| Path | Purpose |
+| --- | --- |
+| `index.html`, `styles.css` | Page composition and shared styles |
+| `script.js` | State, hash routes and saved progress |
+| `js/languages.js` | Shared catalogue, course paths, locales and format metadata |
+| `js/content.js` | Markdown lesson parsing and rendering |
+| `js/practice.js` | Exercise extraction and reference comparison |
+| `js/speech.js` | Device speech capabilities |
+| `js/tutor.js`, `js/coach.js` | Optional model transport and course context |
+| `courses/*.md` | Authored lesson content |
+| `service-worker.js`, `manifest.json` | Offline behaviour and installation |
+| `tools/` | Verification and PWA asset utilities |
+| `vendor/`, `fonts/` | Locally served dependencies and fonts |
 
-## Checks
+Vue, marked and Motion are served from `vendor/`; Inter is self-hosted.
+Before editing the interface, read [DESIGN.md](DESIGN.md). Before changing
+learner feedback, read [PEDAGOGY.md](PEDAGOGY.md).
 
-```sh
-node tools/practice-report.js   # how many exercises extract, per course
-node tools/practice-test.js     # checker behaviour
-node tools/coach-test.js        # the syllabus ceiling, and that prompts stay bounded
-```
-
-Regenerating PWA assets (needs `playwright` and its bundled Chromium):
-
-```sh
-node tools/make-icons.js        # maskable + apple-touch icons, from the app mark
-node tools/make-screenshots.js  # manifest install screenshots
-```
-
-Run `make-screenshots.js` after any visible UI change, since the install
-prompt shows them.
-
-## Running it
-
-Any static server works:
+## Run and verify
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000>. The service worker needs `localhost` or
-HTTPS; everything else is plain files.
+Open [localhost:8000](http://localhost:8000). A service worker requires localhost
+or HTTPS. Serving the same directory under a subpath also works.
 
-Every path in `index.html`, `manifest.json` and `service-worker.js` is relative,
-so the app also works served from a subdirectory — `example.com/lingomitra/` —
-with no build step and no configuration. Both cases are covered by the checks
-above; if you add an asset, keep its path relative or installability and offline
-break at a subpath only, which is easy to miss.
+```sh
+node tools/catalog-test.js
+node tools/practice-test.js
+node tools/coach-test.js
+node tools/offline-test.js
+node tools/practice-report.js --samples=0
+```
+
+The catalogue check requires every published course asset, sequential lesson
+headings, disclosed draft status and usable exercise keys. Offline checks cover
+both root and subdirectory installs, migration of downloaded lessons and cache
+isolation. The report uses the app's actual lesson parser.
+
+For DOM integration checks, install `jsdom` in your development environment and
+run `node tools/dom-test.js` and `node tools/session-test.js`.
+The upgrade regression is `node tools/dom-test.js --upgrade-from-v7`; it requires
+the previous release in Git history. Alternatively set `LM_TEST_JSDOM` to an existing
+jsdom package path. These checks execute the real Vue app, local Markdown parser
+and course assets with browser I/O boundaries supplied by JSDOM. They check
+routing, search, answer concealment and progress; they are not visual or actual
+browser speech/service-worker tests.
+
+`tools/make-icons.js` and `tools/make-screenshots.js` are optional asset utilities
+that need Playwright and Chromium. Regenerate install screenshots after visible
+UI changes before re-adding any outdated screenshot to the manifest.
+
+## Contributing a course
+
+Add `courses/<stable-slug>-lesson.md` and an entry in `js/languages.js`. Follow
+the existing lesson and answer-key shape. Include references actually consulted,
+a precise variety/script statement and an honest review status. Preserve the
+old slugs because links and progress depend on them. Add new flags to the
+service-worker shell list; the seven newly added international flags use
+[flag-icons](https://github.com/lipis/flag-icons), under the included
+[MIT licence](flags/LICENSE.flag-icons).

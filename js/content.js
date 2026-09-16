@@ -239,7 +239,7 @@
   }
 
   /* ── Render one lesson ───────────────────────────────────────────────── */
-  function renderLesson(lesson) {
+  function renderLesson(lesson, language) {
     if (!lesson) return null;
     if (typeof global.marked === 'undefined') {
       throw new Error('Markdown renderer unavailable');
@@ -253,6 +253,13 @@
     var doc = document;
     var root = doc.createElement('div');
     root.innerHTML = global.marked.parse(body);
+
+    // Isolate examples and table cells so Persian/Arabic text and English
+    // explanations coexist without reversing the surrounding reader layout.
+    Array.prototype.forEach.call(root.querySelectorAll('code, td, th'), function (node) {
+      node.setAttribute('dir', 'auto');
+      if (language && node.tagName === 'CODE') node.setAttribute('lang', language.contentTag || language.tags[0]);
+    });
 
     promoteHeadings(root, doc);
 

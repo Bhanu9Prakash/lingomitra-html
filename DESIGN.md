@@ -59,6 +59,8 @@ correctly offline.
 | `.floating-lesson-header` + `.lesson-selection-modal` | `.island` — progress ring, percentage, expandable section index | Watermelon UI · `scroll-island` |
 | (nothing) lesson list was modal-only | `.rail` — persistent lesson rail with completion state | Watermelon UI · `macos-sidebar` |
 | (nothing) no search existed | `.cmd` command palette on ⌘K / Ctrl K / `/` | Watermelon UI · `command-search` |
+| Expanded course picker | Existing `.field` input filters the existing `.lang-card` option list | Reuses the app's Watermelon UI input and option-list adaptations; no new component dependency |
+| Native-script examples | Native text isolation using `dir="auto"` and `bdi` | Standard HTML bidirectional text semantics; existing reader typography |
 | (nothing) mobile had the same modal | `.sheet` bottom sheet | Watermelon UI · `sheet` |
 | `.theme-toggle` (rotating icon) | `.icon-btn` + `.tip` | Watermelon UI · `button` (icon size), `tooltip` |
 | `.lesson-navigation` prev/next buttons | `.pager` — round chevrons, animated destination title | Watermelon UI · `step-pager` |
@@ -167,8 +169,8 @@ adding the on-device model layer, which has a brief there.
 
 ## Note on AI
 
-Every practice prompt and answer is authored — 1,628 of them, extracted from the
-course markdown. Nothing on the practice screen is generated, and the
+Every practice prompt and answer is extracted from the course Markdown.
+New foundation courses are labelled as AI-assisted drafts pending fluent-speaker review. Nothing on the practice screen is generated, and the
 deterministic checker in `js/practice.js` never calls a model.
 
 On top of that sits an **opt-in** conversation tier (`js/tutor.js` transport,

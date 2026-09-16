@@ -144,7 +144,7 @@
      romanisation has to count. */
 
   /* Latin letters, digits, spaces and punctuation only — i.e. no other script. */
-  var ROMAN_ONLY = /^[ -ɏḀ-ỿ -⁯‘’“”\s]+$/;
+  var ROMAN_ONLY = /^[\p{Script=Latin}\p{M}\p{N}\p{P}\p{Z}\sʿʾ]+$/u;
 
   function isRoman(s) { return ROMAN_ONLY.test(s); }
 
@@ -196,7 +196,7 @@
   }
 
   /* ── Public: every checkable item in one lesson ───────────────────────── */
-  function extract(lesson) {
+  function extract(lesson, language) {
     if (!lesson || !lesson.content) return [];
     var lines = lesson.content.split('\n');
     var items = [];
@@ -223,7 +223,11 @@
           prompt: q.prompt,
           hint: q.hint,
           answer: a.answer,
-          roman: a.roman
+          roman: a.roman,
+          locale: language && language.tags[0],
+          strictMarks: !!(language && language.strictMarks),
+          optionalStress: !!(language && language.optionalStress),
+          significantPunctuation: language && language.significantPunctuation || ''
         });
       });
     }
@@ -245,23 +249,30 @@
      a learner may well have produced another valid one. Saying so is honest,
      and it is the line an on-device model would later be asked to adjudicate. */
 
-  var PUNCT = /[.,!?;:¿¡"'“”‘’()（）。、！？，；：]/g;
+  var PUNCT = /[.,!?;:¿¡"'“”‘’()（）。、！？，；：،؛؟۔।॥]/g;
 
-  function normalise(s) {
-    return String(s)
-      .replace(PUNCT, ' ')
+  function normalise(s, strictMarks, significantPunctuation) {
+    return String(s).normalize('NFC')
+      .replace(/[‘’]/g, strictMarks ? "'" : ' ')
+      .replace(PUNCT, function (mark) { return (strictMarks && mark === "'") || (significantPunctuation || '').indexOf(mark) >= 0 ? mark : ' '; })
       .replace(/\s+/g, ' ')
       .trim();
   }
 
-  function fold(s) {
-    var t = String(s).toLowerCase();
-    if (t.normalize) t = t.normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return t;
+  function lower(s, locale) {
+    return locale ? String(s).toLocaleLowerCase(locale) : String(s).toLowerCase();
   }
 
-  function words(s) {
-    return normalise(s).split(' ').filter(Boolean);
+  function fold(s, locale, strictMarks) {
+    var t = lower(s, locale);
+    if (strictMarks) return t;
+    // Fold Latin accents only. Cyrillic breve (й) and other scripts' marks
+    // distinguish letters or vowels and must not become an accepted answer.
+    return t.normalize('NFD').replace(/(\p{Script=Latin})[\u0300-\u036f]+/gu, '$1').normalize('NFC');
+  }
+
+  function words(s, strictMarks, significantPunctuation) {
+    return normalise(s, strictMarks, significantPunctuation).split(' ').filter(Boolean);
   }
 
   /* A parenthesised element in a reference answer is optional — Spanish
@@ -293,15 +304,17 @@
     });
   }
 
-  function compareOne(attempt, target) {
-    var an = normalise(attempt), tn = normalise(target);
+  function compareOne(attempt, target, item) {
+    var locale = item.locale, strict = item.strictMarks, punctuation = item.significantPunctuation;
+    var an = normalise(attempt, strict, punctuation), tn = normalise(target, strict, punctuation);
+    var folded = function (word) { return fold(word, locale, strict); };
     if (!an) return null;
 
     if (an === tn) return { result: 'match' };
-    if (an.toLowerCase() === tn.toLowerCase()) return { result: 'case' };
-    if (fold(an) === fold(tn)) return { result: 'accents' };
+    if (lower(an, locale) === lower(tn, locale)) return { result: 'case' };
+    if (folded(an) === folded(tn)) return { result: 'accents' };
 
-    var aw = words(an).map(fold), tw = words(tn).map(fold);
+    var aw = words(an, strict, punctuation).map(folded), tw = words(tn, strict, punctuation).map(folded);
     if (aw.join(' ') === tw.join(' ')) return { result: 'accents' };
     if (sameMultiset(aw, tw)) return { result: 'order' };
 
@@ -312,8 +325,8 @@
         return {
           result: 'near',
           at: diff[0],
-          gave: words(an)[diff[0]],
-          expected: words(tn)[diff[0]]
+          gave: words(an, strict, punctuation)[diff[0]],
+          expected: words(tn, strict, punctuation)[diff[0]]
         };
       }
     }
@@ -345,8 +358,16 @@
     }
     (item.alts || []).forEach(function (v) { targets.push({ text: v, via: 'alt' }); });
 
+    // Russian stress accents are teaching annotations, absent in ordinary
+    // spelling. An explicitly supplied accent must still be in the right place.
+    if (item.optionalStress && !/\u0301/.test(String(attempt).normalize('NFD'))) {
+      targets.slice().forEach(function (t) {
+        targets.push({ text: t.text.normalize('NFD').replace(/\u0301/g, '').normalize('NFC'), via: t.via });
+      });
+    }
+
     targets.forEach(function (t) {
-      var got = compareOne(attempt, t.text);
+      var got = compareOne(attempt, t.text, item);
       if (!got) return;
       got.via = t.via;
       got.target = t.text;

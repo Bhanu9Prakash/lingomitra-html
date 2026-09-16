@@ -7,36 +7,36 @@
   <title>LingoMitra — Learn languages by pattern</title>
 
   <meta name="description"
-    content="LingoMitra teaches German, Spanish, French, Hindi, Chinese, Japanese and Kannada through the patterns behind them — not flashcards. Free, offline-capable, no account.">
+    content="Explore 34 language courses through grammar patterns, examples and practice. Includes 27 new foundation drafts; fluent-speaker review pending.">
   <link rel="canonical" href="https://lingomitra.com/">
 
   <meta name="theme-color" content="#050315">
   <meta name="color-scheme" content="dark light">
 
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=8">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
   <meta property="og:title" content="LingoMitra — Learn languages by pattern">
   <meta property="og:description"
-    content="Seven languages taught through the patterns behind them. Free, offline-capable, no account.">
+    content="34 language courses, including 27 new foundation drafts. Free, offline-capable, no account.">
   <meta property="og:image" content="https://lingomitra.com/og-image.png">
   <meta property="og:url" content="https://lingomitra.com/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="LingoMitra — Learn languages by pattern">
   <meta name="twitter:description"
-    content="Seven languages taught through the patterns behind them. Free, offline-capable, no account.">
+    content="34 language courses, including 27 new foundation drafts. Free, offline-capable, no account.">
   <meta name="twitter:image" content="https://lingomitra.com/og-image.png">
 
   <!-- Typeface: Inter Variable, self-hosted (Realtime Colors design system) -->
   <link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=8">
 
   <!-- Paint the stored theme before first paint to avoid a flash -->
   <script>
@@ -350,7 +350,7 @@
 
           <div class="shell home__grid">
             <div class="home__intro">
-              <p class="t-micro home__eyebrow">Seven languages · pattern-first</p>
+              <p class="t-micro home__eyebrow">{{ languages.length }} languages · pattern-first</p>
               <h1 class="t-display home__title text-effect" data-pending ref="heroTitle">Languages have patterns. We
                 teach those.</h1>
               <p class="home__lede">Every lesson starts from the rule underneath — how verbs bend, how word order
@@ -373,12 +373,17 @@
                 <p class="t-micro">{{ languages.length }} courses</p>
               </div>
 
+              <label class="field course-search">
+                <span class="sr-only">Find a language</span>
+                <input type="search" v-model="courseQuery" placeholder="Find a language" autocomplete="off">
+              </label>
+              <p class="course-status">27 new foundation drafts. Fluent-speaker review pending.</p>
               <div class="lang-grid" ref="langGrid">
-                <button v-for="lang in languages" :key="lang.code" class="lang-card" @click="selectLanguage(lang)">
+                <button v-for="lang in filteredLanguages" :key="lang.code" class="lang-card" @click="selectLanguage(lang)">
                   <img class="flag flag--lg" :src="'flags/' + lang.flagCode + '.svg'" alt="" width="30" height="30">
                   <span class="lang-card__body">
                     <span class="lang-card__name">{{ lang.name }}</span>
-                    <span class="lang-card__speakers">{{ lang.speakers }}M speakers</span>
+                    <span class="lang-card__native"><bdi :lang="lang.tags[0]">{{ lang.nativeName }}</bdi><span v-if="lang.reviewStatus === 'draft'"> · Draft<span v-if="lang.courseFormat === 'romanised'"> · Romanised</span></span></span>
                   </span>
                   <svg class="lang-card__go" aria-hidden="true"><use href="#i-arrow-right" /></svg>
                   <span class="lang-card__meter" v-if="progressFor(lang.code) > 0"
@@ -386,6 +391,7 @@
                     :aria-label="progressFor(lang.code) + '% complete'"></span>
                 </button>
               </div>
+              <p class="course-status" v-if="!filteredLanguages.length" role="status">No matching language. Try another name.</p>
             </div>
           </div>
         </section>
@@ -431,13 +437,15 @@
               </span>
             </div>
             <h1 class="lesson-head__title">{{ currentLesson.title }}</h1>
+            <p class="course-status" v-if="language.reviewStatus === 'draft'">Draft course · Fluent-speaker review pending.</p>
+            <p class="course-status" v-if="language.formatNote">{{ language.formatNote }}</p>
             <p class="lesson-head__meta">
               <span><svg><use href="#i-hash" /></svg>{{ sections.length }} sections</span>
               <span><svg><use href="#i-clock" /></svg>{{ readingMinutes }} min read</span>
             </p>
           </header>
 
-          <article class="prose" ref="prose" v-html="html"></article>
+          <article class="prose" ref="prose" lang="en" dir="ltr" v-html="html"></article>
 
           <button class="practice-cta" v-if="practicePool" @click="startPractice('lesson')">
             <svg><use href="#i-target" /></svg>
@@ -557,6 +565,7 @@
 
         <!-- One item -->
         <div class="practice__body" v-if="!practiceDone && currentItem" aria-live="polite">
+          <p class="course-status" v-if="language.reviewStatus === 'draft'">Draft course · Fluent-speaker review pending. {{ language.formatNote }}</p>
           <p class="practice__instruction">
             <svg width="14" height="14"><use href="#i-book" /></svg>
             Lesson {{ currentItem.lessonNumber }}
@@ -568,7 +577,7 @@
 
           <div class="answer-field" :data-state="verdict ? verdict.status : null">
             <input ref="answerInput" type="text" v-model="attempt" :disabled="!!verdict" autocomplete="off"
-              autocorrect="off" autocapitalize="off" spellcheck="false" :lang="speechTag"
+              autocorrect="off" autocapitalize="off" spellcheck="false" :lang="speechTag" dir="auto"
               :placeholder="'Say it in ' + language.name + '…'" :aria-label="'Your answer in ' + language.name"
               @keydown.enter.prevent="verdict ? nextItem() : checkAttempt()">
             <button class="mic" v-if="canListen" :data-listening="listening ? 'true' : 'false'"
@@ -604,14 +613,14 @@
             <div class="compare">
               <div class="compare__row" v-if="verdict.status !== 'correct' && attempt.trim()">
                 <span class="compare__who">You</span>
-                <span class="compare__text" v-html="attemptMarkup"></span>
+                <span class="compare__text" dir="auto" :lang="speechTag" v-html="attemptMarkup"></span>
                 <span></span>
               </div>
               <div class="compare__row compare__row--answer">
                 <span class="compare__who">Course</span>
                 <span class="compare__text">
-                  {{ currentItem.answer }}
-                  <small class="compare__roman" v-if="currentItem.roman">{{ currentItem.roman }}</small>
+                  <bdi :lang="speechTag">{{ currentItem.answer }}</bdi>
+                  <small class="compare__roman" dir="ltr" v-if="currentItem.roman">{{ currentItem.roman }}</small>
                 </span>
                 <button class="hear" v-if="voice.ok" :data-speaking="speakingNow ? 'true' : 'false'"
                   @click="hear(currentItem.answer)" aria-label="Hear this sentence">
@@ -667,7 +676,7 @@
           <div class="summary__list" v-if="practiceReview.length">
             <p class="t-micro">Compare these again</p>
             <div class="summary__item" v-for="r in practiceReview" :key="r.item.id">
-              <p>{{ r.item.answer }}</p>
+              <p dir="auto" :lang="speechTag">{{ r.item.answer }}</p>
               <button class="hear" v-if="voice.ok" @click="hear(r.item.answer)" aria-label="Hear this sentence">
                 <svg><use href="#i-speaker" /></svg>
               </button>
@@ -699,6 +708,7 @@
         </div>
 
         <div class="talk__scroll scroll-y" :class="{ 'talk__scroll--live': talkTurns.length }" ref="talkScroll">
+          <p class="course-status" v-if="language.reviewStatus === 'draft'">Draft course · Fluent-speaker review pending. {{ language.formatNote }}</p>
           <!-- No model chosen yet. Watermelon UI · alert composition -->
           <template v-if="!tutorState.ready">
             <div class="notice notice--accent">
@@ -725,9 +735,9 @@
               <svg><use href="#i-chat" /></svg>
               <b>Only what you have met</b>
               <p>
-                The partner is held to lessons 1–{{ talkUpTo }}. It will not teach you
-                anything new, and it will not hand you the answer — if you get stuck it
-                asks a smaller question instead.
+                The partner is asked to stay within lessons 1–{{ talkUpTo }} and help you
+                work out an answer through smaller questions. Compare its replies
+                with the course; model responses can be mistaken.
               </p>
             </div>
             <p class="t-micro" style="margin-top:26px">What shall we talk about?</p>
@@ -746,12 +756,12 @@
                 <img src="mascot.svg" alt="" width="22" height="22">
               </span>
               <div>
-                <div class="turn__bubble" :lang="t.role === 'user' ? speechTag : speechTag">
+                <div class="turn__bubble" :lang="speechTag" dir="auto">
                   <span class="thinking-dots" v-if="!t.text && t.role !== 'user'" aria-label="Thinking">
                     <i></i><i></i><i></i>
                   </span>
                   <template v-else>{{ said(t.text) }}</template>
-                  <small class="turn__gloss" v-if="gloss(t.text)">{{ gloss(t.text) }}</small>
+                  <small class="turn__gloss" lang="en" dir="ltr" v-if="gloss(t.text)">{{ gloss(t.text) }}</small>
                 </div>
                 <button class="turn__replay" v-if="t.role !== 'user' && t.text && voice.ok"
                   @click="hear(said(t.text))" aria-label="Hear this again">
@@ -774,7 +784,7 @@
         <!-- Composer — Kokonut UI · ai-prompt -->
         <form class="composer" v-if="tutorState.ready && talkTurns.length" @submit.prevent="sendTurn">
           <div class="composer__row">
-            <input type="text" v-model="talkInput" :lang="speechTag" autocomplete="off" autocorrect="off"
+            <input type="text" v-model="talkInput" :lang="speechTag" dir="auto" autocomplete="off" autocorrect="off"
               autocapitalize="sentences" :disabled="talkBusy"
               :placeholder="'Answer in ' + language.name + '\u2026'"
               :aria-label="'Your reply in ' + language.name">
@@ -1042,12 +1052,13 @@
   <script src="vendor/marked.umd.js"></script>
   <script src="vendor/motion.min.js"></script>
   <script src="js/motion-fx.js"></script>
-  <script src="js/practice.js"></script>
-  <script src="js/speech.js"></script>
+  <script src="js/practice.js?v=8"></script>
+  <script src="js/languages.js?v=8"></script>
+  <script src="js/speech.js?v=8"></script>
   <script src="js/tutor.js"></script>
-  <script src="js/coach.js"></script>
-  <script src="js/content.js"></script>
-  <script src="script.js"></script>
+  <script src="js/coach.js?v=8"></script>
+  <script src="js/content.js?v=8"></script>
+  <script src="script.js?v=8"></script>
 </body>
 
 </html>

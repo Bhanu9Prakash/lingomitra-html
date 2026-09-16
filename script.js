@@ -8,15 +8,7 @@
 (function () {
   'use strict';
 
-  var LANGUAGES = [
-    { name: 'German', code: 'german', flagCode: 'de', speakers: 132 },
-    { name: 'Spanish', code: 'spanish', flagCode: 'es', speakers: 534 },
-    { name: 'French', code: 'french', flagCode: 'fr', speakers: 280 },
-    { name: 'Hindi', code: 'hindi', flagCode: 'hi', speakers: 615 },
-    { name: 'Chinese', code: 'chinese', flagCode: 'zh', speakers: 1120 },
-    { name: 'Japanese', code: 'japanese', flagCode: 'jp', speakers: 128 },
-    { name: 'Kannada', code: 'kannada', flagCode: 'kn', speakers: 56 }
-  ];
+  var LANGUAGES = window.languageCatalog;
 
   var STORE_THEME = 'lm.theme';
   var STORE_PROGRESS = 'lm.progress';
@@ -95,6 +87,7 @@
     data: function () {
       return {
         languages: LANGUAGES,
+        courseQuery: '',
         view: 'home',
 
         dark: document.documentElement.classList.contains('theme-dark'),
@@ -160,6 +153,12 @@
     },
 
     computed: {
+      filteredLanguages: function () {
+        var q = this.courseQuery.trim().toLocaleLowerCase();
+        return this.languages.filter(function (lang) {
+          return !q || (lang.name + ' ' + lang.nativeName + ' ' + lang.code + ' ' + lang.group).toLocaleLowerCase().indexOf(q) >= 0;
+        });
+      },
       currentLesson: function () {
         for (var i = 0; i < this.lessons.length; i++) {
           if (this.lessons[i].id === this.lessonId) return this.lessons[i];
@@ -182,7 +181,7 @@
       lessonEyebrow: function () {
         if (!this.currentLesson) return '';
         if (!this.currentLesson.number) return 'Introduction';
-        return 'Lesson ' + this.currentLesson.number + ' of ' + this.lessons.length;
+        return 'Lesson ' + this.currentLesson.number + ' of ' + this.lessons.filter(function (l) { return l.number > 0; }).length;
       },
       doneCount: function () {
         var done = this.doneList(this.language && this.language.code);
@@ -237,7 +236,7 @@
         return this.practiceResults.filter(function (r) { return r.status !== 'correct'; });
       },
       speechTag: function () {
-        return this.language ? window.speech.tagFor(this.language.code) : 'en';
+        return this.language ? this.language.contentTag : 'en';
       },
 
       /* ── Conversation ────────────────────────────────────────────────
@@ -278,7 +277,7 @@
       },
       verdictNote: function () {
         if (!this.verdict) return '';
-        if (this.verdict.via === 'roman') {
+        if (this.verdict.via === 'roman' && this.verdict.correct) {
           return 'Counted from the romanisation \u2014 typing the script is the next step, not a requirement.';
         }
         switch (this.verdict.result) {
@@ -318,6 +317,7 @@
 
       voiceNote: function () {
         if (this.voice.ok || !this.language) return '';
+        if (this.voice.reason === 'course-format') return 'This course uses a Roman transcription. Audio and voice input are not available for this format.';
         if (this.voice.reason === 'unsupported') return 'This browser cannot read sentences aloud.';
         return 'This device has no ' + this.language.name + ' voice installed, so there is nothing to play.';
       },
@@ -342,7 +342,7 @@
 
         LANGUAGES.forEach(function (lang) {
           if (self.language && self.language.code === lang.code) return;
-          if (q && lang.name.toLowerCase().indexOf(q) < 0) return;
+          if (q && (lang.name + ' ' + lang.nativeName + ' ' + lang.code).toLowerCase().indexOf(q) < 0) return;
           out.push({
             key: 'g:' + lang.code,
             group: 'Switch language',
@@ -455,6 +455,10 @@
         /* Settings sit outside a course: they are reachable from anywhere and
            keep whatever language is already loaded behind them. */
         if (parts[0] === 'settings') {
+          this._courseLoadId = (this._courseLoadId || 0) + 1;
+          this.pendingMode = '';
+          this.loading = false;
+          this.abortTalk();
           this.closeOverlays();
           this.stopListening();
           this.view = 'settings';
@@ -485,7 +489,7 @@
         if (this.language && this.language.code === lang.code && this.lessons.length) {
           if (wantId && wantId !== this.lessonId) this.showLesson(wantId);
           this.view = mode || 'lesson';
-          if (practising && !this.practiceSet.length) this.resumePracticeRoute();
+          if (practising && (!this.practiceSet.length || this._practiceCeiling !== (this.currentLesson ? this.currentLesson.number : this.furthestLesson()))) this.resumePracticeRoute();
           if (talking) this.enterTalk();
           if (!mode) this.stopListening();
           return;
@@ -506,10 +510,7 @@
            from a later lesson would leave the header promising lessons 1..N
            while the model is still working from the old digest, so start over
            rather than quietly disagreeing with the screen. */
-        if (this.talkTurns.length && this._talkCeiling !== this.talkUpTo) {
-          this.talkTurns = [];
-          this.scenario = '';
-        }
+        if (this._talkLanguage && (this._talkLanguage !== this.language.code || this._talkCeiling !== this.talkUpTo)) this.resetTalk();
         this.probeVoice();
         this.scrollTalk();
       },
@@ -530,6 +531,7 @@
         var upTo = this.currentLesson ? this.currentLesson.number : this.furthestLesson();
         var set = window.practice.session(this.itemsByLesson, upTo, 8);
         if (!set.length) { this.navigate(this.routeFor(this.language.code, this.lessonId), true); return; }
+        this._practiceCeiling = upTo;
         this.practiceSet = set;
         this.practiceIndex = 0;
         this.practiceResults = [];
@@ -584,6 +586,10 @@
 
       /* ── Course loading ──────────────────────────────────────────────── */
       resetLesson: function () {
+        this._courseLoadId = (this._courseLoadId || 0) + 1;
+        this.loading = false;
+        this.itemsByLesson = {};
+        this.resetTalk();
         this.stopListening();
         window.speech.cancel();
         this.practiceSet = [];
@@ -605,6 +611,9 @@
 
       loadCourse: function (lang, wantId) {
         var self = this;
+        this.resetLesson();
+        var loadId = this._courseLoadId;
+        var active = function () { return self._courseLoadId === loadId && self.language && self.language.code === lang.code; };
 
         if (courseCache[lang.code]) {
           this.lessons = courseCache[lang.code];
@@ -614,17 +623,17 @@
           return;
         }
 
-        this.resetLesson();
         this.loading = true;
         this.pendingName = lang.name;
 
-        fetch('./courses/' + lang.code + '-lesson.md')
+        fetch('./' + lang.coursePath)
           .then(function (res) {
             if (res.status === 404) return null;
             if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + res.statusText);
             return res.text();
           })
           .then(function (markdown) {
+            if (!active()) return;
             if (markdown == null) { self.comingSoon = true; self.loading = false; return; }
             var lessons = window.content.splitLessons(markdown, lang.code);
             if (!lessons.length) { self.comingSoon = true; self.loading = false; return; }
@@ -638,6 +647,7 @@
             self.resumeMode();
           })
           .catch(function (err) {
+            if (!active()) return;
             self.error = true;
             self.errorDetail = err && err.message ? err.message : String(err);
             self.loading = false;
@@ -656,7 +666,7 @@
         this.lessonId = lesson.id;
 
         try {
-          var rendered = window.content.renderLesson(lesson);
+          var rendered = window.content.renderLesson(lesson, this.language);
           this.html = rendered.html;
           this.sections = rendered.sections;
           this.readingMinutes = rendered.minutes;
@@ -687,13 +697,13 @@
       },
 
       /* ── Practice ─────────────────────────────────────────────────────
-         Every prompt and answer here was written by the course author. Nothing
-         is generated, so nothing can be hallucinated. */
+         Prompts and reference answers come from the course files. They are not
+         generated at runtime; draft course content still needs human review. */
       buildItems: function (lang, lessons) {
         if (practiceCache[lang.code]) return practiceCache[lang.code];
         var byLesson = {};
         lessons.forEach(function (lesson) {
-          var got = window.practice.extract(lesson);
+          var got = window.practice.extract(lesson, lang);
           if (got.length) byLesson[lesson.id] = got;
         });
         practiceCache[lang.code] = byLesson;
@@ -708,6 +718,7 @@
         var set = window.practice.session(this.itemsByLesson, upTo, 8);
         if (!set.length) return;
 
+        this._practiceCeiling = upTo;
         this.practiceSet = set;
         this.practiceIndex = 0;
         this.practiceResults = [];
@@ -750,19 +761,20 @@
 
       beginTalk: function (scenario) {
         if (!this.tutorState.ready || !this.language || !this.lessons.length) return;
+        this.resetTalk();
         this.scenario = scenario.id;
-        this.talkError = '';
-        this.talkTurns = [];
 
         /* Built once and held for the session: the ceiling should not move
            under the learner halfway through a conversation. */
+        this._talkLanguage = this.language.code;
         this._talkCeiling = this.talkUpTo;
         this._talkSystem = window.coach.conversationPrompt({
           lessons: this.lessons,
           itemsByLesson: this.itemsByLesson,
           upTo: this.talkUpTo,
           languageName: this.language.name,
-          scenario: scenario.brief
+          scenario: scenario.brief,
+          courseFormat: this.language.courseFormat
         });
 
         this.streamTurn([{ role: 'user', content: 'Start the conversation.' }]);
@@ -792,11 +804,11 @@
 
       streamTurn: function (messages) {
         var self = this;
+        this.abortTalk();
+        var requestId = this._talkRequestId;
         var turn = { role: 'assistant', text: '' };
         this.talkTurns.push(turn);
         this.talkBusy = true;
-
-        this.abortTalk();
         this._talkAbort = typeof AbortController === 'function' ? new AbortController() : null;
 
         window.tutor.chat({
@@ -804,8 +816,9 @@
           messages: messages,
           maxTokens: 300,
           signal: this._talkAbort ? this._talkAbort.signal : undefined,
-          onDelta: function () { self.scrollTalk(); }
+          onDelta: function () { if (self._talkRequestId === requestId) self.scrollTalk(); }
         }).then(function (text) {
+          if (self._talkRequestId !== requestId) return;
           turn.text = String(text || '').trim();
           self.talkBusy = false;
           self._talkAbort = null;
@@ -818,6 +831,7 @@
           /* Hearing it is half the point of a conversation. */
           if (self.voice.ok) self.hear(self.said(turn.text));
         }).catch(function (err) {
+          if (self._talkRequestId !== requestId) return;
           self.talkBusy = false;
           self._talkAbort = null;
           if (err && err.name === 'AbortError') { self.talkTurns.pop(); return; }
@@ -826,7 +840,21 @@
         });
       },
 
+      resetTalk: function () {
+        this.abortTalk();
+        this.talkTurns = [];
+        this.talkInput = '';
+        this.talkError = '';
+        this.scenario = '';
+        this._talkLanguage = '';
+        this._talkCeiling = null;
+        this._talkSystem = '';
+      },
+
       abortTalk: function () {
+        this._talkRequestId = (this._talkRequestId || 0) + 1;
+        this.talkBusy = false;
+        this.talkTurns = this.talkTurns.filter(function (turn) { return turn.role !== 'assistant' || turn.text; });
         if (this._talkAbort) { try { this._talkAbort.abort(); } catch (e) { /* ignore */ } }
         this._talkAbort = null;
       },
@@ -894,6 +922,7 @@
             role: 'user',
             content: window.coach.verdictPrompt({
               languageName: this.language.name,
+              courseFormat: this.language.courseFormat,
               prompt: item.prompt,
               answer: item.answer,
               attempt: attempt
@@ -1068,17 +1097,22 @@
       /* ── Speech ──────────────────────────────────────────────────────── */
       probeVoice: function () {
         var self = this;
-        this.canListen = window.speech.canListen();
+        this.canListen = !!this.language && this.language.courseFormat !== 'romanised' && window.speech.canListen();
         this.cloudSpeech = window.speech.listenIsCloud();
         if (!this.language) return;
-        window.speech.probeVoice(this.language.code, function (result) {
-          self.voice = result;
+        if (this.language.courseFormat === 'romanised') {
+          this.voice = { ok: false, reason: 'course-format' };
+          return;
+        }
+        var code = this.language.code;
+        window.speech.probeVoice(code, function (result) {
+          if (self.language && self.language.code === code) self.voice = result;
         });
       },
 
       hear: function (text) {
         var self = this;
-        if (!this.voice.ok || !text) return;
+        if (!this.voice.ok || !text || !this.language || this.language.courseFormat === 'romanised') return;
         this.speakingNow = true;
         window.speech.speak(text, this.language.code, {
           onend: function () { self.speakingNow = false; },
@@ -1118,13 +1152,15 @@
       /* Word-level diff, used only to point at what differs. It never rewrites
          the learner's sentence. */
       diffMarkup: function (attempt, target) {
-        var norm = window.practice.normalise;
+        var item = this.currentItem || {};
+        var norm = function (text) { return window.practice.normalise(text, item.strictMarks, item.significantPunctuation); };
+        var lower = function (text) { return item.locale ? text.toLocaleLowerCase(item.locale) : text.toLowerCase(); };
         var a = norm(attempt).split(' ').filter(Boolean);
         var t = norm(target).split(' ').filter(Boolean);
-        var pool = t.map(function (w) { return w.toLowerCase(); });
+        var pool = t.map(lower);
 
         return a.map(function (word) {
-          var i = pool.indexOf(word.toLowerCase());
+          var i = pool.indexOf(lower(word));
           if (i >= 0) { pool.splice(i, 1); return escapeHtml(word); }
           return '<mark>' + escapeHtml(word) + '</mark>';
         }).join(' ');

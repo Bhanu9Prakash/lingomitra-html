@@ -17,16 +17,10 @@
 (function (global) {
   'use strict';
 
-  /* BCP-47 tags for the seven courses, most-specific first. */
-  var TAGS = {
-    german: ['de-DE', 'de-AT', 'de-CH', 'de'],
-    spanish: ['es-ES', 'es-MX', 'es-US', 'es-419', 'es'],
-    french: ['fr-FR', 'fr-CA', 'fr-BE', 'fr'],
-    hindi: ['hi-IN', 'hi'],
-    chinese: ['zh-CN', 'cmn-Hans-CN', 'zh-Hans', 'zh'],
-    japanese: ['ja-JP', 'ja'],
-    kannada: ['kn-IN', 'kn']
-  };
+  /* The course catalogue owns BCP-47 tags, most-specific first. A tag does
+     not promise an installed voice or a recognition provider's coverage. */
+  var TAGS = {};
+  (global.languageCatalog || []).forEach(function (lang) { TAGS[lang.code] = lang.tags; });
 
   var synth = global.speechSynthesis || null;
   var Recognition = global.SpeechRecognition || global.webkitSpeechRecognition || null;

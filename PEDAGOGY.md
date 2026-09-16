@@ -59,10 +59,12 @@ The prompt appears, the learner produces, and only then does the course's answer
 appear. This is the same rule the in-lesson answer key follows, and it is the
 digital equivalent of Language Transfer's pause.
 
-**2. Nothing is generated. Every prompt and answer was written by the author.**
-The courses already contain 1,600+ worked exercises with answers. Practice reads
-those. Because nothing is generated, nothing can be hallucinated — which matters
-enormously for Kannada, where no small model is reliable.
+**2. Practice reads authored references; it does not generate exercise keys at runtime.**
+Prompts and answers come from the course Markdown. The new foundation courses are
+original AI-assisted drafts with fluent-speaker review pending. A fixed reference
+can still be inaccurate, incomplete or unnatural: passing parser tests does not
+validate its language. Keep that review status visible and accept course corrections
+through the normal contribution process.
 
 **3. Scope to what the learner has met.** A session for lesson N draws only on
 lessons 1..N, weighted about two-thirds towards the newest material. That is
@@ -75,10 +77,18 @@ re-derived rather than left behind.
 | --- | --- | --- |
 | identical after normalising punctuation | **correct** | unambiguous |
 | differs only in capitals | **correct**, with a note | in German the capitals carry meaning |
-| differs only in diacritics | **correct**, with a note | the words were right |
+| differs only in Latin diacritics, legacy course | **correct**, with a note | retains the original seven courses' keyboard-tolerant policy |
+| a meaningful letter, tone or nasal mark differs, new course | **close** or **different**, with the reference shown | a missing mark can change meaning |
 | same words, different order | **close** — both shown, no verdict | reordering is often perfectly good grammar |
 | one word different | **close** — both shown, no verdict | may be a synonym the course did not list |
 | anything else | **different** — both shown, no verdict | the course gives one answer; another may also be right |
+
+New courses use locale-aware casing (including Turkish dotted and dotless I),
+Unicode NFC equivalence, and strict mark comparison. Typed course romanisation is
+still accepted. Apostrophes that represent checked consonants are preserved.
+Non-Latin vowel marks and Cyrillic breve are never removed as Latin accents.
+Russian allows ordinary spelling without optional acute stress annotations; if
+the learner supplies stress marks, their positions are compared.
 
 The checker never says "wrong". It says what the course has, and what the learner
 wrote, and lets them compare. Asserting more than it can prove would be worse
@@ -105,11 +115,12 @@ so instead of showing a button that does nothing.
 ## What this means for the model layer
 
 The model is not the teacher. The course is the teacher, and it already works.
-The model layer gets the jobs the checker cannot do, under these constraints —
-enforced in code, in `js/coach.js`, rather than left to the model's discretion:
+The model layer gets the jobs the checker cannot do. `js/coach.js` builds the
+following instructions and bounds the supplied course context; these prompts
+do not guarantee that a model will follow every instruction:
 
 - **It may adjudicate, not author.** Its question is "does this attempt say the
-  same thing as this reference?" — a comparison with a known-good answer in the
+  same thing as this reference?" — a comparison with the course reference in the
   prompt, not open-ended generation. That is the difference between a task a
   1–3B model can do and one it cannot.
 - **It may not explain grammar the lesson has not reached.** Explanation belongs
@@ -154,8 +165,8 @@ bounded (under 12,000 characters) on the longest course.
 
 The second opinion is a narrower job on purpose. The model is handed the task,
 the course's answer *and* the learner's attempt, and asked only whether they say
-the same thing. A comparison against a known-good reference is a task a small
-local model can do; open-ended translation is not. It returns two lines, and a
+the same thing. A comparison against a course reference is a narrower task; neither the
+reference nor the model is guaranteed to be correct. It returns two lines, and a
 reply that does not parse never reads as acceptable.
 
 **What is deliberately absent.** No score, no streak, no "level", no daily goal.

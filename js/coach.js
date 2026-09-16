@@ -83,6 +83,8 @@
       'themselves rather than memorising them. Your job is to give them something',
       'real to say — not to teach.',
       '',
+      opts.courseFormat === 'romanised'
+        ? 'COURSE FORMAT: Use the same Roman transcription as the supplied sentences. Preserve its phonemic symbols and punctuation. Do not switch to a native script.' : '',
       'HARD RULES',
       '1. Stay inside what the course has covered. Use only the structures and',
       '   vocabulary implied by the list below. If you want a word they have not',
@@ -130,6 +132,7 @@
     return [
       'You are checking one sentence a ' + opts.languageName + ' learner wrote.',
       '',
+      opts.courseFormat === 'romanised' ? 'The course uses Roman transcription. Assess that format and preserve phonemic symbols and punctuation.' : '',
       'Task they were given (in English): ' + clean(opts.prompt),
       'The course\'s answer: ' + clean(opts.answer),
       'What the learner wrote: ' + clean(opts.attempt),

@@ -8,6 +8,16 @@ const kn = { answer: 'ನಾನು ಕಾಫಿ ಕುಡಿಯುತ್ತೇ�
 const ja = { answer: '私は本を読みます。', roman: 'Watashi wa hon o yomimasu.' };
 const fr = { answer: 'Nous habitons à Montréal.', roman: null };
 
+// Transliteration must retain combining nasal marks rather than becoming part
+// of the native answer because the script detector rejects decomposed Latin.
+const nasalLesson = { id: 'punjabi-lesson-1', number: 1, content: [
+  '## Lesson 1: Nasal vowels', '### Practice', '', '1. I am.', '',
+  '***Answers:***', '', '1. `ਮੈਂ ਹਾਂ।` - `Maĩ hā̃.`', '', '### Explanation'
+].join('\n') };
+const nasalItem = p.extract(nasalLesson)[0];
+if (nasalItem && nasalItem.answer === 'ਮੈਂ ਹਾਂ।' && nasalItem.roman === 'Maĩ hā̃.') pass++;
+else { fail++; console.log('  FAIL combining nasal romanisation: ' + JSON.stringify(nasalItem)); }
+
 const cases = [
   // exact and near-exact
   ['exact',                de, 'Wir wohnen in Hamburg.',      'match',   true],
@@ -19,6 +29,19 @@ const cases = [
   ['one word off',         de, 'Wir wohnen in Berlin',        'near',    false],
   ['unrelated',            de, 'Ich esse Pizza',              'differs', false],
   ['empty',                de, '   ',                         'empty',   undefined],
+
+  // New courses preserve meaningful Latin marks and Turkish letter identity.
+  ['Turkish uppercase I', { answer: 'Ilık.', locale: 'tr-TR', strictMarks: true }, 'ılık', 'case', true],
+  ['Turkish dotted I', { answer: 'İyi.', locale: 'tr-TR', strictMarks: true }, 'iyi', 'case', true],
+  ['Turkish wrong I', { answer: 'Ilık.', locale: 'tr-TR', strictMarks: true }, 'ilık', 'near', false],
+  ['Turkish distinct s', { answer: 'şu', locale: 'tr-TR', strictMarks: true }, 'su', 'near', false],
+  ['Portuguese nasal vowel', { answer: 'pão', locale: 'pt-BR', strictMarks: true }, 'pao', 'near', false],
+  ['Russian ordinary spelling', { answer: 'Ко́фе', locale: 'ru-RU', strictMarks: true, optionalStress: true }, 'Кофе', 'match', true],
+  ['Russian marked stress contrast', { answer: 'му́ка', locale: 'ru-RU', strictMarks: true, optionalStress: true }, 'мука́', 'near', false],
+  ['Kashmiri vowel length', { answer: 'Kursi: cha sa:ph.', locale: 'ks-Latn', strictMarks: true, significantPunctuation: ':' }, 'Kursi cha sa:ph.', 'near', false],
+  ['Checked consonant', { answer: "orak'", locale: 'sat', strictMarks: true }, 'orak', 'near', false],
+  ['Apostrophe convention', { answer: "orak'", locale: 'sat', strictMarks: true }, 'orak’', 'match', true],
+  ['Romanised tone contrast', { answer: 'zá', locale: 'brx', strictMarks: true }, 'zà', 'near', false],
 
   // optional parenthesised subject (Spanish pro-drop)
   ['with pronoun',         es, '(Yo) cocino la cena.',        'match',   true],
