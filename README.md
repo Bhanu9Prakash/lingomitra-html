@@ -3,7 +3,7 @@
 LingoMitra teaches languages through patterns: how verbs change, how words fit
 together, and how to build a sentence yourself. No account or build step is needed.
 
-[Website](https://lingomitra.com/) · [Course files](courses/) · [Course review notes](docs/course-review.md)
+[Website](https://bhanu9prakash.github.io/lingomitra-html/) · [Course files](courses/) · [Course review notes](docs/course-review.md)
 
 ## Languages and editorial status
 
@@ -33,6 +33,10 @@ historical-source foundation, with contemporary usage review also pending.
   International or Started courses, and search by English name, native name or
   language code. Continue learning reopens your most recent lesson. Cmd/Ctrl K
   searches the current course and switches languages.
+- **Interface:** the 21st.dev-inspired refresh uses bordered course options,
+  a sticky search/filter toolbar on desktop, visible saved reading progress,
+  clearer lesson numbering and a focused practice panel. Compact mobile
+  navigation retains 44px controls, and both themes support reduced motion.
 - **Stable links and progress:** hashes such as `#/german/12` and saved progress
   continue to work. Progress stays in the browser's local storage.
 - **Practice:** construct a sentence, then compare it with the course answer.
@@ -97,8 +101,8 @@ isolation. The report uses the app's actual lesson parser.
 
 For DOM integration checks, install `jsdom` in your development environment and
 run `node tools/dom-test.js` and `node tools/session-test.js`.
-The upgrade regressions are `node tools/dom-test.js --upgrade-from-v7` and
-`node tools/dom-test.js --upgrade-from-v8`; they require those releases in Git
+The upgrade regressions are `node tools/dom-test.js --upgrade-from-v7`,
+`--upgrade-from-v8` and `--upgrade-from-v9`; they require those releases in Git
 history. Alternatively set `LM_TEST_JSDOM` to an existing
 jsdom package path. These checks execute the real Vue app, local Markdown parser
 and course assets with browser I/O boundaries supplied by JSDOM. They check

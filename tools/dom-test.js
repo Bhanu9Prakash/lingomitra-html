@@ -29,10 +29,15 @@ w.fetch = async url => {
   return { ok: fs.existsSync(file), status: fs.existsSync(file) ? 200 : 404, text: async () => fs.readFileSync(file, 'utf8') };
 };
 // Older workers can serve new network-first HTML with their cached shell assets.
-// Simulate that boundary using the actual v7 or v8 precache list.
-const upgrading = process.argv.includes('--upgrade-from-v7') || process.argv.includes('--upgrade-from-v8');
-const previous = process.argv.includes('--upgrade-from-v8')
-  ? '9ab246614205fc2e1c5c45fa37ed7bdd25a79e8d' : '19264f81ff34c668d8649e8fc3f808277b8036fd';
+// Simulate that boundary using the actual previous release's precache list.
+const releases = {
+  '--upgrade-from-v7': '19264f81ff34c668d8649e8fc3f808277b8036fd',
+  '--upgrade-from-v8': '9ab246614205fc2e1c5c45fa37ed7bdd25a79e8d',
+  '--upgrade-from-v9': 'b1b2158eba293c32483ce2d5cf8a0a4d1a3c6fea'
+};
+const upgradeFlag = Object.keys(releases).find(flag => process.argv.includes(flag));
+const upgrading = !!upgradeFlag;
+const previous = releases[upgradeFlag];
 let cachedPaths = [];
 if (upgrading) {
   const oldContext = vm.createContext({ self: { registration: { scope: base }, addEventListener() {} }, URL });

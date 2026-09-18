@@ -45,29 +45,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/narrow-lesson.png",
-      "sizes": "780x1688",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "A lesson, with the section index within thumb reach"
-    },
-    {
-      "src": "screenshots/narrow-practice.png",
-      "sizes": "780x1688",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Build the sentence yourself, then see the answer"
-    },
-    {
-      "src": "screenshots/wide-lesson.png",
-      "sizes": "2560x1600",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "The lesson reader on a wide screen"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Continue where I left off",

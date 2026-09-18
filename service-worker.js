@@ -7,14 +7,14 @@
 
 const SCOPE = self.registration.scope;
 const PREFIX = 'lingomitra@' + SCOPE;
-const CACHE = PREFIX + 'shell-v9';
+const CACHE = PREFIX + 'shell-v10';
 const COURSE_CACHE = PREFIX + 'courses-v1';
 const COURSE_BASE = new URL('courses/', SCOPE).href;
 
 const SHELL = [
   './',
   'index.html',
-  'styles.css?v=9',
+  'styles.css?v=10',
   'script.js?v=9',
   'js/motion-fx.js',
   'js/content.js?v=8',
@@ -30,7 +30,7 @@ const SHELL = [
   'fonts/inter-latin-ext-opsz-normal.woff2',
   'mascot.svg',
   'favicon.ico',
-  'manifest.json?v=8',
+  'manifest.json?v=10',
   'icons/icon-192x192.png',
   'icons/icon-512x512.png',
   'flags/de.svg',

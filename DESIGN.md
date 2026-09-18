@@ -12,9 +12,10 @@ Keep this table current: if you add UI, add the row first.
 | [Kokonut UI](https://kokonutui.com/) | Control surfaces, micro-labels, dropdown and loading treatments |
 | [Motion Primitives](https://motion-primitives.com/) | Component-level transitions, text reveal, disclosure, scroll progress |
 | [Motion](https://motion.dev/) | The only animation runtime (`vendor/motion.min.js`, MIT). All orchestration lives in `js/motion-fx.js` |
-| [Haikei](https://haikei.app/) | The blurry-gradient backdrop on the home screen (inline SVG in `index.html`) |
+| [Haikei](https://haikei.app/) | Historical home backdrop reference; removed in the 21st.dev-inspired refresh to keep the catalogue surface quiet |
 | [Refero](https://styles.refero.design/) | Benchmark for reader layout, density and hierarchy — no code taken |
 | [Realtime Colors](https://www.realtimecolors.com/?colors=050315-fbfbfe-2f27ce-dedcff-433bff&fonts=Inter-Inter) | Palette and typeface |
+| [21st.dev](https://21st.dev/) | User-requested visual reference: editorial type, gallery boundaries, restrained controls and interaction states. No third-party component code copied; existing Vue/Watermelon adaptations remain the implementation. |
 
 Two approved sources were evaluated and deliberately not used:
 
@@ -32,9 +33,10 @@ Two approved sources were evaluated and deliberately not used:
 
 ## Colour
 
-Realtime Colors, applied directly. Dark is the default; light is the same
-palette inverted. No other colour families except the functional
-success / warning / danger states.
+Realtime Colors supplies the brand palette. Dark is the default; light uses the
+same palette. The September 2026 refresh calibrates surface mixes and secondary
+text contrast while keeping the brand colours below. Other colour families are
+reserved for functional success / warning / danger states.
 
 | Token | Dark | Light |
 | --- | --- | --- |
@@ -54,7 +56,7 @@ correctly offline.
 | --- | --- | --- |
 | `.primary-btn` / `.secondary-btn` / `.language-btn` | `.btn` with `--primary` / `--outline` / `--secondary` / `--ghost` variants and `--sm` size | Watermelon UI · `button` |
 | `.badge` (orange pill) | `.badge` with `--accent` / `--success` | Watermelon UI · `badge` |
-| `.language-card` grid of bordered cards | `.lang-grid` — one panel of hairline-divided rows | Watermelon UI · `option-list` |
+| `.language-card` grid of bordered cards | `.lang-grid` with individually bordered course options | Watermelon UI · `option-list`, with the user-requested 21st.dev gallery reference |
 | `.language-dropdown` in the header | `.lang-switch` + `.menu` | Watermelon UI · `dropdown-menu`, Kokonut UI · `profile-dropdown` |
 | `.floating-lesson-header` + `.lesson-selection-modal` | `.island` — progress ring, percentage, expandable section index | Watermelon UI · `scroll-island` |
 | (nothing) lesson list was modal-only | `.rail` — persistent lesson rail with completion state | Watermelon UI · `macos-sidebar` |
@@ -63,6 +65,9 @@ correctly offline.
 | Catalogue controls | Existing `.field` search plus All, Indian, International and Started pressed buttons | Reuses the app's Watermelon UI input and select-ai-agent button adaptations; native button semantics |
 | Return to learning | Existing `.resume` row sits beside the compact introduction and above the catalogue on phones | Reuses the app's progress and button adaptations; saved lesson links stay unchanged |
 | Native-script examples | Native text isolation using `dir="auto"` and `bdi` | Standard HTML bidirectional text semantics; existing reader typography |
+| Catalogue presentation, September 2026 refresh | Bordered course options with a flag tile, native names, draft disclosures and saved reading progress; sticky search/filter toolbar | 21st.dev gallery and navigation reference applied to existing Watermelon option-list/input/button adaptations |
+| Shared interface polish | Quieter surfaces, stronger secondary-text contrast, consistent control radii, readable lesson index and a contained practice question | Existing Watermelon sidebar, button, input and progress adaptations; 21st.dev visual reference only |
+| Mobile lesson navigation | Compact brand mark beside the existing 44px controls; explicit All languages return in the lesson index | Existing brand asset, Watermelon icon button and macos-sidebar adaptations |
 | (nothing) mobile had the same modal | `.sheet` bottom sheet | Watermelon UI · `sheet` |
 | `.theme-toggle` (rotating icon) | `.icon-btn` + `.tip` | Watermelon UI · `button` (icon size), `tooltip` |
 | `.lesson-navigation` prev/next buttons | `.pager` — round chevrons, animated destination title | Watermelon UI · `step-pager` |
@@ -82,7 +87,7 @@ correctly offline.
 | (nothing) nothing to choose | `.scenario` / `.scenarios`, `.presets` | Watermelon UI · `select-ai-agent` (pressed pill) |
 | (nothing) no settings screen | `.setup`, `.field`, `.field__select`, `.notice` | Watermelon UI · `input`, `select`, `alert` |
 | (nothing) practice could not defer | `.second` — a dashed second opinion inside the verdict | Watermelon UI · `alert` (dashed variant) |
-| `.hero-image` floating Font Awesome circles | `.backdrop` blurry-gradient SVG | Haikei · blurry gradient |
+| `.hero-image` floating Font Awesome circles | Plain home surface and a two-line typographic introduction | 21st.dev editorial hierarchy reference; original brand and Inter |
 | Home headline and catalogue entrance | Immediate text and course options, with no stagger across 34 languages | Existing Inter type scale and option-list hover/focus states; motion remains on navigation and disclosure |
 | Font Awesome CDN (~75 KB for 10 icons) | inline SVG sprite in `index.html` | Lucide geometry, as used by every approved source |
 | Nunito | Inter Variable | Realtime Colors |
@@ -135,9 +140,9 @@ The app is installable and works offline. Things worth not breaking:
   notice. `manifest.json` therefore carries no `id`: `id` resolves against the
   origin rather than the manifest URL, so a relative one is not the fix —
   omitting it defaults the identity to `start_url`, which is right either way.
-- **Screenshots** in the manifest are what make Chrome on Android show its
-  richer install dialog, so they are part of setup, not marketing. Regenerate
-  them after visible UI changes with `node tools/make-screenshots.js`.
+- **Screenshots** can give Chrome on Android a richer install dialog. The
+  manifest currently omits the old screenshots because the interface has
+  changed. Re-add them only after capturing and verifying the current app.
 
 ## Architecture
 
