@@ -7,9 +7,10 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const vm = require('node:vm');
-const catalogue = require('../js/languages.js');
-const root = path.join(__dirname, '..');
-const base = 'http://localhost/lingomitra/';
+const root = process.env.LM_TEST_APP_ROOT || path.join(__dirname, '..');
+const catalogue = require(path.join(root, 'js/languages.js'));
+const base = process.argv.includes('--site-root') ? 'http://localhost/' : 'http://localhost/lingomitra/';
+const basePath = new URL(base).pathname;
 const logs = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', err => { if (!/navigation|scroll/i.test(err.message)) logs.push(err.message); });
@@ -17,6 +18,16 @@ const dom = new JSDOM(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), {
   url: base, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole: vc
 });
 const w = dom.window;
+const siteTools = new Map();
+if (process.argv.includes('--site-tools')) {
+  Object.defineProperty(w.document, 'modelContext', { value: {
+    registerTool(tool, options) {
+      assert.ok(!siteTools.has(tool.name), 'Duplicate Site tool');
+      siteTools.set(tool.name, tool);
+      options.signal.addEventListener('abort', () => siteTools.delete(tool.name));
+    }
+  } });
+}
 w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
 w.scrollTo = () => {};
 w.HTMLElement.prototype.scrollIntoView = function () {};
@@ -25,7 +36,7 @@ w.ResizeObserver = class { observe() {} disconnect() {} unobserve() {} };
 w.fetch = async url => {
   const u = new URL(url, w.location.href);
   assert.ok(u.href.startsWith(base), 'Course fetch escaped the app subdirectory');
-  const file = path.join(root, decodeURIComponent(u.pathname.slice('/lingomitra/'.length)));
+  const file = path.join(root, decodeURIComponent(u.pathname.slice(basePath.length)));
   return { ok: fs.existsSync(file), status: fs.existsSync(file) ? 200 : 404, text: async () => fs.readFileSync(file, 'utf8') };
 };
 // Older workers can serve new network-first HTML with their cached shell assets.
@@ -33,7 +44,8 @@ w.fetch = async url => {
 const releases = {
   '--upgrade-from-v7': '19264f81ff34c668d8649e8fc3f808277b8036fd',
   '--upgrade-from-v8': '9ab246614205fc2e1c5c45fa37ed7bdd25a79e8d',
-  '--upgrade-from-v9': 'b1b2158eba293c32483ce2d5cf8a0a4d1a3c6fea'
+  '--upgrade-from-v9': 'b1b2158eba293c32483ce2d5cf8a0a4d1a3c6fea',
+  '--upgrade-from-v10': 'a026004a66ccec1e2d13032a6db3649ebb108ded'
 };
 const upgradeFlag = Object.keys(releases).find(flag => process.argv.includes(flag));
 const upgrading = !!upgradeFlag;
@@ -46,7 +58,7 @@ if (upgrading) {
 }
 for (const el of w.document.querySelectorAll('script[src]')) {
   const src = el.getAttribute('src');
-  const file = new URL(src, base).pathname.slice('/lingomitra/'.length);
+  const file = new URL(src, base).pathname.slice(basePath.length);
   const cached = upgrading && cachedPaths.includes(src);
   const source = cached
     ? execFileSync('git', ['show', previous + ':' + file], { cwd: root, encoding: 'utf8' })
@@ -98,6 +110,47 @@ async function input(el, text) {
     w.document.querySelector('.lang-card').click(); await settle();
     assert.equal(w.location.hash, '#/persian/intro', 'Started course did not reopen its saved place');
     await go('/'); await filter('all');
+
+    // Exercise optional Site tools against the real app, using a mock registry.
+    // This verifies the adapter contract, not host WebMCP integration.
+    if (process.argv.includes('--site-tools')) {
+      assert.equal(siteTools.size, 2);
+      const context = siteTools.get('get_learning_context');
+      const start = siteTools.get('start_lesson_practice');
+      assert.equal(context.annotations.readOnlyHint, true);
+      assert.equal(start.annotations.readOnlyHint, false);
+      assert.equal(context.execute({}).view, 'home');
+      assert.throws(() => context.execute({ unknown: true }), /empty object/);
+      await assert.rejects(start.execute({}), /Open a numbered lesson/);
+      assert.equal(w.location.hash, '#/');
+      await go('/russian/1');
+      const result = await start.execute({});
+      assert.equal(result.view, 'practice');
+      assert.equal(result.language, 'russian');
+      assert.ok(result.questionCount > 0);
+      assert.ok(w.document.querySelector('.answer-field input'));
+    }
+
+    // The flag-only mobile trigger must remain named and all menu actions usable.
+    await go('/russian/1');
+    const languageButton = w.document.querySelector('.lang-switch__btn');
+    assert.equal(languageButton.getAttribute('aria-label'), 'Switch language, current: Russian');
+    languageButton.click(); await settle();
+    assert.equal(languageButton.getAttribute('aria-expanded'), 'true');
+    assert.equal(w.document.querySelectorAll('.menu [role="menuitem"]').length, 35);
+    const languageOption = name => [...w.document.querySelectorAll('.menu__item')].find(el => el.textContent.trim() === name);
+    languageOption('Arabic (Modern Standard)').click(); await settle();
+    assert.match(w.location.hash, /^#\/arabic(?:\/|$)/);
+    assert.equal(w.document.querySelector('.menu'), null, 'Menu stayed open after selecting a language');
+    w.document.querySelector('.lang-switch__btn').click(); await settle();
+    w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await settle();
+    assert.equal(w.document.querySelector('.menu'), null, 'Escape did not close the language menu');
+    w.document.querySelector('.lang-switch__btn').click(); await settle();
+    w.document.querySelector('.lesson-head').click(); await settle();
+    assert.equal(w.document.querySelector('.menu'), null, 'An outside click did not close the menu');
+    w.document.querySelector('.lang-switch__btn').click(); await settle();
+    languageOption('All languages').click(); await settle();
+    assert.equal(w.location.hash, '#/');
 
     const chosen = process.argv.includes('--legacy-only') ? catalogue.slice(0, 7) : catalogue;
     for (const lang of chosen) {

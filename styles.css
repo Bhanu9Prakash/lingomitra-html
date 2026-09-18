@@ -2250,6 +2250,19 @@ a:hover { text-decoration: underline; }
   .lang-switch__btn { justify-content: center; }
   .lang-switch__btn > svg:last-child { display: none; }
 
+  /* Anchor to the full-width topbar, so the menu stays inside either screen
+     edge even when its trigger is near the middle. Leave room for Contents. */
+  .lang-switch { position: static; }
+  .lang-switch > .menu {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    min-width: 0;
+    max-height: min(560px, calc(100vh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 96px));
+    max-height: min(560px, calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 96px));
+    overscroll-behavior: contain;
+  }
+  .menu__item { min-height: 44px; }
+
   .lesson-head { margin-bottom: 26px; }
   .prose { font-size: 1rem; }
   .prose h2 { margin-top: 2.1em; padding-top: 1.2em; }

@@ -36,7 +36,7 @@
   <!-- Typeface: Inter Variable, self-hosted (Realtime Colors design system) -->
   <link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 
   <!-- Paint the stored theme before first paint to avoid a flash -->
   <script>
@@ -289,6 +289,7 @@
 
             <div class="lang-switch" ref="langSwitch" v-if="language">
               <button class="lang-switch__btn" @click="langMenuOpen = !langMenuOpen"
+                :aria-label="'Switch language, current: ' + language.name"
                 :aria-expanded="langMenuOpen ? 'true' : 'false'" aria-haspopup="menu">
                 <img class="flag" :src="'flags/' + language.flagCode + '.svg'" :alt="''" width="18" height="18">
                 <span class="only-desktop">{{ language.name }}</span>

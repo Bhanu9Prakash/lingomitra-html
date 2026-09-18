@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const root = process.env.LM_TEST_APP_ROOT || path.join(__dirname, '..');
 
 async function verify(scope, failShell) {
   const records = new Map(), handlers = {};
@@ -33,7 +34,7 @@ async function verify(scope, failShell) {
     const relative = url.pathname.slice(new URL(scope).pathname.length) || 'index.html';
     if (failShell && relative === 'script.js') throw new Error('Required shell asset failed');
     if (relative.startsWith('courses/')) return new Response('updated lesson');
-    assert.ok(fs.existsSync(path.join(__dirname, '..', relative)), 'Missing precache asset: ' + relative);
+    assert.ok(fs.existsSync(path.join(root, relative)), 'Missing precache asset: ' + relative);
     return new Response('shell: ' + relative);
   }
   const worker = {
@@ -41,7 +42,7 @@ async function verify(scope, failShell) {
     clients: { async claim() { claimed = true; } }, async skipWaiting() { skipped = true; },
     addEventListener(type, fn) { handlers[type] = fn; }
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../service-worker.js'), 'utf8'), {
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'service-worker.js'), 'utf8'), {
     self: worker, caches, fetch: network, URL, Response, Request, Promise
   });
   async function dispatch(type, request) {
